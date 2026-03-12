@@ -1,4 +1,5 @@
-import {  Geist_Mono, Inter } from "next/font/google"
+import { Geist_Mono, Inter } from "next/font/google"
+import { Toaster } from "sonner";
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -28,7 +29,11 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+       
+        <ThemeProvider>{children}
+
+           <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )
