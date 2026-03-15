@@ -50,7 +50,7 @@ export function SignUpForm({
 
     const formData = new FormData(e.currentTarget)
     const res = await signUp.email({
-      name:formData.get("name") as string,
+      name:"",
       email: formData.get("email") as string,
       password: formData.get("password") as string
     })
@@ -95,15 +95,7 @@ export function SignUpForm({
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
               </FieldSeparator>
-            <Field>
-  <FieldLabel htmlFor="name">Name</FieldLabel>
-  <Input
-    id="name"
-    name="name"
-    type="text"
-    required
-  />
-</Field>
+            
 
 <Field>
   <FieldLabel htmlFor="email">Email</FieldLabel>

@@ -2,7 +2,7 @@ import { Geist_Mono, Inter } from "next/font/google"
 import { Toaster } from "sonner";
 
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "next-themes";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
@@ -30,7 +30,7 @@ export default function RootLayout({
     >
       <body>
        
-        <ThemeProvider>{children}
+         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>{children}
 
            <Toaster />
         </ThemeProvider>

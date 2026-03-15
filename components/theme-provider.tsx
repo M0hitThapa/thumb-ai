@@ -1,71 +1,52 @@
-"use client"
+"use client";
+import { useTheme } from "next-themes";
+import { IconSun, IconMoon } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 
-import * as React from "react"
-import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+export const ModeToggle = () => {
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(() =>
+    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light"
+  );
+  const { theme, setTheme } = useTheme();
 
-function ThemeProvider({
-  children,
-  ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setSystemTheme(e.matches ? "dark" : "light");
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  const SWITCH_THEME = () => {
+    switch (theme) {
+      case "light": {
+        setTheme("dark");
+        return;
+      }
+      case "dark": {
+        setTheme("light");
+        return;
+      }
+      case "system": {
+        setTheme(systemTheme === "dark" ? "light" : "dark");
+        return;
+      }
+    }
+  };
+
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-      {...props}
+    <button
+      onClick={SWITCH_THEME}
+      className="relative size-4 md:size-6 items-center justify-center cursor-pointer"
     >
-      <ThemeHotkey />
-      {children}
-    </NextThemesProvider>
-  )
-}
-
-function isTypingTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  return (
-    target.isContentEditable ||
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "SELECT"
-  )
-}
-
-function ThemeHotkey() {
-  const { resolvedTheme, setTheme } = useTheme()
-
-  React.useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.repeat) {
-        return
-      }
-
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return
-      }
-
-      if (event.key?.toLowerCase() !== "d") {
-        return
-      }
-
-      if (isTypingTarget(event.target)) {
-        return
-      }
-
-      setTheme(resolvedTheme === "dark" ? "light" : "dark")
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown)
-    }
-  }, [resolvedTheme, setTheme])
-
-  return null
-}
-
-export { ThemeProvider }
+      <IconMoon className="absolute inset-0 size-4 md:size-6 shrink-0 scale-0 rotate-45 transition-all duration-300 dark:scale-100 dark:rotate-0 dark:text-neutral-200" />
+      <IconSun className="absolute inset-0 size-4 md:size-6 shrink-0 scale-100 text-neutral-500 transition-all duration-300 dark:scale-0 dark:rotate-45" />
+    </button>
+  );
+};
