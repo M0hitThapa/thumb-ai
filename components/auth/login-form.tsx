@@ -50,6 +50,8 @@ export function LoginForm({
       password:formData.get("password") as string
 
     })
+
+    console.log(res)
     if (res.error) {
       setError(res.error.message || "something went wrong")
     } else {
@@ -90,6 +92,7 @@ export function LoginForm({
                   id="email"
                   type="email"
                   placeholder="m@example.com"
+                  name="email"
                   required
                 />
               </Field>
@@ -103,7 +106,7 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input id="password" type="password" name="password" required />
               </Field>
               <Field>
                 <Button type="submit">Login</Button>
