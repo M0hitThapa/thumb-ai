@@ -69,7 +69,7 @@ export function SignUpForm({
 
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 shadow-[0px_0px_2px_9px_#d9d9d9] dark:shadow-[0px_0px_2px_9px_#3b3b3b] rounded-3xl ", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>
@@ -130,10 +130,7 @@ export function SignUpForm({
           </form>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </FieldDescription>
+      
     </div>
   )
 }

@@ -23,6 +23,7 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
+ 
 
   @@unique([email])
   @@map("user")
@@ -71,4 +72,16 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+model Subscription {
+id           String    @id @default(cuid())
+
+}
+
+
+enum Plan {
+  FREE
+  CREATOR
+  PRO
 }
