@@ -1,4 +1,4 @@
-'use client'
+"use client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +20,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn, signInWithGoogle } from "@/lib/auth-client"
 import { toast } from "sonner"
+import { GoogleLogo } from "../icons/logos"
 
 export function LoginForm({
   className,
@@ -28,39 +29,39 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-
-
   const handleGoogleSignin = async () => {
-   
     try {
       await signInWithGoogle()
     } catch (error) {
       toast.error("google sign-up failed")
- 
     }
   }
 
-  const handleSubmit = async (e:React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-      setError(null)
-    
+    setError(null)
+
     const formData = new FormData(e.currentTarget)
     const res = await signIn.email({
       email: formData.get("email") as string,
-      password:formData.get("password") as string
-
+      password: formData.get("password") as string,
     })
 
     console.log(res)
     if (res.error) {
       setError(res.error.message || "something went wrong")
     } else {
-      router.push('/dashboard')
+      router.push("/dashboard")
     }
-
   }
   return (
-    <div className={cn("flex flex-col gap-6 shadow-[0px_0px_2px_9px_#d9d9d9] dark:shadow-[0px_0px_2px_9px_#3b3b3b] rounded-3xl", className)} {...props}>
+    <div
+      className={cn(
+        "flex flex-col gap-6 rounded-3xl shadow-[0px_0px_2px_9px_#d9d9d9] dark:shadow-[0px_0px_2px_9px_#3b3b3b]",
+        className
+      )}
+      {...props}
+    >
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>
@@ -69,17 +70,15 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} >
+          <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                
-                <Button onClick={handleGoogleSignin} variant="outline" type="button">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path
-                      d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                <Button
+                  onClick={handleGoogleSignin}
+                  variant="outline"
+                  type="button"
+                >
+                  <GoogleLogo />
                   Login with Google
                 </Button>
               </Field>
@@ -118,7 +117,6 @@ export function LoginForm({
           </form>
         </CardContent>
       </Card>
-      
     </div>
   )
 }

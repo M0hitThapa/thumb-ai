@@ -23,10 +23,12 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
- 
+
 
   @@unique([email])
   @@map("user")
+  subscriptions Subscription[]
+  creditBalances CreditBalance[]
 }
 
 model Session {
@@ -76,7 +78,32 @@ model Verification {
 
 model Subscription {
 id           String    @id @default(cuid())
+userId       String    @unique
+user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+plan         Plan       @default(FREE)
+status       SubscriptionStatus   @default(ACTIVE)
+dodoSubId    String?     @unique
+dodoOrderId  String?
+currentPeriodEnd   DateTime?
+createdAt    DateTime     @default(now())
+updatedAt    DateTime     @updatedAt
 
+@@map("subscriptions")
+
+
+
+
+}
+
+model CreditBalance {
+  id       String @id @default(cuid())
+  userId    String  @unique
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credits   Int   @default(0)
+  freeGenerationUsed  Int  @default(0)
+  updatedAt   DateTime  @updatedAt
+
+  @@map("credit_balance")
 }
 
 
@@ -84,4 +111,11 @@ enum Plan {
   FREE
   CREATOR
   PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  TRIALING
 }
