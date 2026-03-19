@@ -1,7 +1,8 @@
-import { auth } from "@/lib/auth"
-import prisma from "@/lib/prisma"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { headers } from "next/headers"
+
+import { TopNav } from "@/components/layout/top-nav"
 
 export default async function DashboardLayout({
   children,
@@ -9,17 +10,12 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    redirect("/login")
-  }
-  const [creditBalance, subscription] = await Promise.all([
-    prisma.creditBalance.findUnique({
-      where: { userId: session.user.id },
-      select: { credits: true, freeGenerationUsed: true },
-    }),
-    prisma.subscription.findUnique({
-      where: { userId: session.user.id },
-      select: { plan: true },
-    }),
-  ])
+  if (!session?.user) redirect("/login")
+
+  return (
+    <div className="min-h-screen">
+      <TopNav />
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+    </div>
+  )
 }

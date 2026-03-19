@@ -54,7 +54,7 @@ export function SignUpForm({
     if (res.error) {
       setError(res.error.message || "something went wrong")
     } else {
-      router.push("/dashboard")
+      router.push("/generate")
     }
   }
 

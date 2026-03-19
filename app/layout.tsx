@@ -1,11 +1,12 @@
 import { Geist_Mono, Inter } from "next/font/google"
-import { Toaster } from "sonner";
+import { Toaster } from "sonner"
 
 import "./globals.css"
-import { ThemeProvider } from "next-themes";
-import { cn } from "@/lib/utils";
+import { ThemeProvider } from "next-themes"
+import { cn } from "@/lib/utils"
+import { QueryProvider } from "@/providers/query-provider"
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'})
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -13,8 +14,8 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata = {
-  title: 'ThumbAi - AI powered youtube thumbnail generator',
-  description:'Generate high converting thumbnail with ai'
+  title: "ThumbAi - AI powered youtube thumbnail generator",
+  description: "Generate high converting thumbnail with ai",
 }
 
 export default function RootLayout({
@@ -26,13 +27,18 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
+      className={cn(
+        "antialiased",
+        fontMono.variable,
+        "font-sans",
+        inter.variable
+      )}
     >
       <body>
-       
-         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>{children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <QueryProvider>{children}</QueryProvider>
 
-           <Toaster />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
