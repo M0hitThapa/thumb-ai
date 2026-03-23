@@ -14,10 +14,10 @@ datasource db {
 
 
 model User {
-  id            String    @id
+  id            String    @id @default(cuid())
   name          String?
   email         String
-  emailVerified Boolean
+  emailVerified Boolean   @default(false)
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
@@ -27,27 +27,16 @@ model User {
 
   @@unique([email])
   @@map("user")
-  subscriptions Subscription[]
-  creditBalances CreditBalance[]
+  thumbnails     Thumbnail[]
+  creditBalances CreditBalance?
+
+  @@map("user)
 }
 
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
-  @@map("session")
-}
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
@@ -59,63 +48,72 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  @@map("account")
+  @@map("accounts")
+}
+
+
+
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 model Verification {
-  id         String    @id
+  id         String    @id @default(cuid())
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
 
-  @@map("verification")
+  @@map("verifications")
 }
 
-model Subscription {
-id           String    @id @default(cuid())
-userId       String    @unique
-user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-plan         Plan       @default(FREE)
-status       SubscriptionStatus   @default(ACTIVE)
-dodoSubId    String?     @unique
-dodoOrderId  String?
-currentPeriodEnd   DateTime?
-createdAt    DateTime     @default(now())
-updatedAt    DateTime     @updatedAt
-
-@@map("subscriptions")
-
-
-
-
-}
+// ─── Application ───────────────────────────────────────────────────────────
 
 model CreditBalance {
-  id       String @id @default(cuid())
-  userId    String  @unique
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  credits   Int   @default(0)
-  freeGenerationUsed  Int  @default(0)
-  updatedAt   DateTime  @updatedAt
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credits             Int      @default(0)
+  updatedAt           DateTime @updatedAt
 
-  @@map("credit_balance")
+  @@map("credit_balances")
+}
+
+model Thumbnail {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt       String      @db.Text
+  imageUrl     String      // base64 or storage URL
+  ctrScore     Float?
+  title        String?
+  style        String?
+  colorTheme   String?
+  mode         String      @default("concept") // "concept" | "image"
+  metadata     Json?       @default("{}")
+  deletedAt    DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("thumbnails")
 }
 
 
-enum Plan {
-  FREE
-  CREATOR
-  PRO
-}
 
-enum SubscriptionStatus {
-  ACTIVE
-  CANCELLED
-  PAST_DUE
-  TRIALING
-}
+
