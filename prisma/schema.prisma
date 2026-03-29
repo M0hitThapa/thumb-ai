@@ -30,7 +30,7 @@ model User {
   thumbnails     Thumbnail[]
   creditBalances CreditBalance?
 
-  @@map("user)
+
 }
 
 
@@ -113,7 +113,3 @@ model Thumbnail {
   @@index([userId, createdAt(sort: Desc)])
   @@map("thumbnails")
 }
-
-
-
-

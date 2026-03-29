@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { DashboardShell } from "@/components/generate/layout/dashboard-shell"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,7 +15,7 @@ import {
 export default function Page() {
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <DashboardShell />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
