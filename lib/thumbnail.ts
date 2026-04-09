@@ -1,12 +1,26 @@
 import { GoogleGenAI } from "@google/genai"
 
+
 function getClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not set")
-  return new GoogleGenAI({ apiKey })
+  const project = process.env.GOOGLE_CLOUD_PROJECT
+  const location = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1"
+
+  if (!project) throw new Error("GOOGLE_CLOUD_PROJECT is not set")
+
+  return new GoogleGenAI({
+    vertexai: true,
+    project,
+    location,
+    // Vercel: set GOOGLE_CLOUD_API_KEY in env vars
+    // Local:  leave unset — ADC from `gcloud auth application-default login` handles it
+    ...(process.env.GOOGLE_CLOUD_API_KEY
+      ? { apiKey: process.env.GOOGLE_CLOUD_API_KEY }
+      : {}),
+  })
 }
 
-const TEXT_MODEL = "gemini-3-flash-preview" as const
+const TEXT_MODEL = "google/gemini-3.1-pro-preview"
+
 
 export interface ThumbnailConcept {
   id: string
@@ -55,6 +69,7 @@ export interface GenerateConceptsOptions {
   colorTheme?: string
   userId: string
 }
+
 
 export async function generateThumbnailConcepts(
   options: GenerateConceptsOptions
@@ -140,12 +155,13 @@ Return ONLY valid JSON:
   })
 
   const text = response.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error("No response from Gemini text model")
+  if (!text) throw new Error("No response from Vertex AI")
 
   const cleaned = text
     .replace(/^```(?:json)?\n?/m, "")
     .replace(/\n?```$/m, "")
     .trim()
+
   const parsed = JSON.parse(cleaned) as {
     concepts: ThumbnailConcept[]
     generalAdvice: string
