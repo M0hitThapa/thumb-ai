@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { ImageCategory } from "@/app/api/classify-image/route"
+import type { ImageCategory } from "../image-category"
 
 export interface UploadedImage {
   readonly base64: string
@@ -62,7 +62,7 @@ export const CATEGORY_COLORS: Record<ImageCategory, string> = {
 }
 
 interface ImagesState {
-  topic: string
+  title: string
   prompt: string
   style: string
   colorMode: "auto" | "palette"
@@ -78,7 +78,7 @@ interface ImagesState {
   generating: boolean
   editing: boolean
 
-  setTopic: (v: string) => void
+  setTitle: (v: string) => void
   setPrompt: (v: string) => void
   setStyle: (v: string) => void
   setColorMode: (v: "auto" | "palette") => void
@@ -113,7 +113,7 @@ interface ImagesState {
 }
 
 export const useImagesStore = create<ImagesState>()((set, get) => ({
-  topic: "",
+  title: "",
   prompt: "",
   style: "",
   colorMode: "auto",
@@ -129,7 +129,7 @@ export const useImagesStore = create<ImagesState>()((set, get) => ({
   generating: false,
   editing: false,
 
-  setTopic: (topic) => set({ topic }),
+  setTitle: (title) => set({ title }),
   setPrompt: (prompt) => set({ prompt }),
   setStyle: (style) => set({ style }),
   setColorMode: (colorMode) => set({ colorMode }),

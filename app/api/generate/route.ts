@@ -10,7 +10,7 @@ import { apiError, validationError } from "@/lib/api-error"
 export const maxDuration = 60
 
 const GenerateSchema = z.object({
-  topic: z.string().min(3).max(500),
+  title: z.string().min(3).max(500),
   style: z.string().max(200).optional(),
   colorTheme: z.string().max(200).optional(),
 })
@@ -38,12 +38,12 @@ export async function POST(request: NextRequest) {
     const parsed = GenerateSchema.safeParse(await request.json())
     if (!parsed.success) return validationError(parsed.error)
 
-    const { topic, style, colorTheme } = parsed.data
+    const { title, style, colorTheme } = parsed.data
 
     let result
     try {
       result = await generateThumbnailConcepts({
-        topic,
+        title,
         style,
         colorTheme,
         userId: session.user.id,
@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
       await prisma.thumbnail.create({
         data: {
           userId: session.user.id,
-          prompt: topic,
+          prompt: title,
           imageUrl: "",
           ctrScore: result.concepts[0]?.ctrScore ?? null,
-          title: topic.slice(0, 100),
+          title: title.slice(0, 100),
           style: style ?? null,
           colorTheme: colorTheme ?? null,
           metadata: result as unknown as Prisma.InputJsonValue,

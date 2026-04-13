@@ -2,12 +2,12 @@ import { create } from "zustand"
 import type { ThumbnailAnalysisResult } from "@/lib/thumbnail"
 
 interface GenerateState {
-  topic: string
+  title: string
   style: string
   colorTheme: string
   result: ThumbnailAnalysisResult | null
   loading: boolean
-  setTopic: (v: string) => void
+  setTitle: (v: string) => void
   setStyle: (v: string) => void
   setColorTheme: (v: string) => void
   setLoading: (v: boolean) => void
@@ -16,12 +16,12 @@ interface GenerateState {
 }
 
 export const useGenerateStore = create<GenerateState>()((set) => ({
-  topic: "",
+  title: "",
   style: "",
   colorTheme: "",
   result: null,
   loading: false,
-  setTopic: (topic) => set({ topic }),
+  setTitle: (title) => set({ title }),
   setStyle: (style) => set({ style }),
   setColorTheme: (colorTheme) => set({ colorTheme }),
   setLoading: (loading) => set({ loading }),

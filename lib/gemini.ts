@@ -1,15 +1,15 @@
 import { GoogleGenAI, type Part } from "@google/genai"
-import type { ImageCategory } from "@/app/api/classify-image/route"
+import type { ImageCategory } from "@/lib/image-category"
 
-let _client: GoogleGenAI | null = null
+let _imageClient: GoogleGenAI | null = null
 
 function getClient(): GoogleGenAI {
-  if (!_client) {
+  if (!_imageClient) {
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) throw new Error("GEMINI_API_KEY is not set")
-    _client = new GoogleGenAI({ apiKey })
+    _imageClient = new GoogleGenAI({ apiKey })
   }
-  return _client
+  return _imageClient
 }
 
 const IMAGE_MODEL = "gemini-3.1-flash-image-preview" as const
@@ -24,13 +24,12 @@ export interface ClassifiedImage {
 }
 
 export interface GenerateImagesRequest {
-  readonly topic: string
+  readonly title: string
   readonly style: string
   readonly colorTheme: string
   readonly images: ClassifiedImage[]
   readonly variantCount: 1 | 2 | 3
   readonly prompt?: string
-
   readonly useAiPerson?: boolean
 }
 
@@ -63,8 +62,8 @@ const VARIATION_CONFIGS: readonly VariationConfig[] = [
   },
 ] as const
 
-function buildOverlayTextGuidance(topic: string): string {
-  const t = topic.trim()
+function buildOverlayTextGuidance(videoTitle: string): string {
+  const t = videoTitle.trim()
   if (!t) return ""
 
   return `
@@ -117,7 +116,7 @@ function buildImageContext(images: ClassifiedImage[]): string {
           `IMAGE ${n} — PROPS / OBJECTS:`,
           `  This is ${label}. These objects should appear in the thumbnail as supporting visual elements.`,
           `  Incorporate them naturally alongside the main subject.`,
-          `  Size and position them to reinforce the story of the video topic.`
+          `  Size and position them to reinforce the story of the video title.`
         )
         break
 
@@ -134,7 +133,7 @@ function buildImageContext(images: ClassifiedImage[]): string {
           `    most of the frame? How is negative space used? Replicate the spatial feel.`,
           `  • LIGHTING & MOOD — Match the vibe: dramatic & dark, bright & energetic, etc.`,
           `  • TEXT STYLE — Match font weight, placement zone, and size ratio if there is text.`,
-          `    BUT replace the actual words with a hook for THIS video's topic (see text rules above).`,
+          `    BUT replace the actual words with a hook for THIS video's title (see text rules above).`,
           `  • BACKGROUND TREATMENT — Blurred? Gradient? Illustrated? Solid? Replicate it.`,
           ``,
           `  WHAT NOT TO COPY:`,
@@ -192,7 +191,7 @@ function buildImageContext(images: ClassifiedImage[]): string {
   } else if (hasPersons && hasProps) {
     lines.push(
       "  PERSON WITH PROPS: Place the props around or near the person.",
-      "  Generate a background that complements both and fits the video topic."
+      "  Generate a background that complements both and fits the video title."
     )
   } else if (personCount > 1) {
     lines.push(
@@ -202,7 +201,7 @@ function buildImageContext(images: ClassifiedImage[]): string {
   } else if (hasPersons) {
     lines.push(
       "  SINGLE SUBJECT: The person is the hero. Generate a background that supports",
-      "  the video topic and makes the person pop visually."
+      "  the video title and makes the person pop visually."
     )
   } else if (hasBackground || hasProps) {
     lines.push(
@@ -213,7 +212,7 @@ function buildImageContext(images: ClassifiedImage[]): string {
     lines.push(
       "  STYLE-DRIVEN CREATION: Use the reference thumbnail's aesthetic as your guide.",
       "  Create a completely new thumbnail that captures the same visual energy,",
-      "  composition style, and emotional impact for this new video topic."
+      "  composition style, and emotional impact for this new video title."
     )
   }
 
@@ -232,7 +231,7 @@ function buildAiPersonBlock(req: GenerateImagesRequest): string {
 The user does NOT have a personal photo — generate an attractive, realistic-looking person as the thumbnail's main subject.
 
 Rules:
-- Create a person whose appearance and expression naturally fits the video topic.
+- Create a person whose appearance and expression naturally fits the video title.
 - Choose gender, ethnicity, age, clothing, and expression that make contextual sense (e.g. a finance video → professional-looking adult, a travel vlog → casual explorer).
 - The person should display an EXPRESSIVE, exaggerated emotion relevant to the title (shock, excitement, disbelief, joy, etc.).
 - Place the person as the dominant foreground element (50–70% of the frame).
@@ -260,10 +259,10 @@ function buildScenarioBlock(req: GenerateImagesRequest): string {
     lines.push(
       "",
       "The user did NOT upload any personal photos, backgrounds, or props.",
-      "Create the thumbnail ENTIRELY from scratch based on the video topic.",
+      "Create the thumbnail ENTIRELY from scratch based on the video title.",
       hasReference
         ? "Use the style reference image to guide your colors, composition, and mood."
-        : "Choose a visual concept that best tells the story of the video topic.",
+        : "Choose a visual concept that best tells the story of the video title.",
       "Generate visuals, backgrounds, text, and any subjects from imagination."
     )
   } else if (noUploadedImages && req.useAiPerson) {
@@ -272,7 +271,7 @@ function buildScenarioBlock(req: GenerateImagesRequest): string {
       "The user has no uploaded photos but wants an AI-generated person.",
       hasReference
         ? "Create a thumbnail with an AI-generated person, styled after the reference image."
-        : "Create a thumbnail with an AI-generated person and an appropriate background for the topic."
+        : "Create a thumbnail with an AI-generated person and an appropriate background for the title."
     )
   }
 
@@ -320,7 +319,7 @@ function buildScenarioBlock(req: GenerateImagesRequest): string {
 }
 
 function buildCoreRules(req: GenerateImagesRequest): string {
-  const overlay = buildOverlayTextGuidance(req.topic)
+  const overlay = buildOverlayTextGuidance(req.title)
 
   return `
 ${overlay}
@@ -344,7 +343,7 @@ ${overlay}
 **CTR Psychology:**
 - Create a clear curiosity gap: viewers should feel they are missing something if they do not click.
 - Use partial reveals, open loops, or dramatic framing to hint at the payoff without fully revealing it.
-- If relevant to the topic, include powerful numbers/symbols (e.g. "5X", "$10,000", "24H") to increase stopping power.
+- If relevant to the title, include powerful numbers/symbols (e.g. "5X", "$10,000", "24H") to increase stopping power.
 - Make the hook click-worthy but still honest to what the video is actually about.
 
 **Colours:**
@@ -352,7 +351,7 @@ ${overlay}
 - ${
     req.colorTheme
       ? `Use exactly this 3-color direction: ${req.colorTheme} (primary, secondary, accent)`
-      : "AUTO — infer the best bold 3-color scheme from the video topic and any reference image (if none, pick high-CTR YouTube-style contrast)"
+      : "AUTO — infer the best bold 3-color scheme from the video title and any reference image (if none, pick high-CTR YouTube-style contrast)"
   }
 - Maximum 3 dominant colours
 
@@ -395,10 +394,10 @@ export async function generateThumbnailImages(
   const promises = VARIATION_CONFIGS.slice(0, count).map(async (config) => {
     const fullPrompt = [
       `Create a high-CTR YouTube thumbnail for this video.`,
-      `Video topic: "${req.topic}"`,
+      `Video title: "${req.title}"`,
       "",
-      `THUMBNAIL TEXT (non-negotiable): ONE short phrase of 3–5 words using ONLY words from the video topic string.`,
-      `Do not invent new hooks or words that are not in the topic. Same meaning as the title.`,
+      `THUMBNAIL TEXT (non-negotiable): ONE short phrase of 3–5 words using ONLY words from the video title string.`,
+      `Do not invent new hooks or words that are not in the title.`,
       "",
       scenarioBlock,
       "",
@@ -411,7 +410,7 @@ export async function generateThumbnailImages(
       coreRules,
       "",
       `VARIATION: ${config.direction}`,
-      "Make this variant visually distinct. Same allowed words for text (from topic), different layout/lighting.",
+      "Make this variant visually distinct. Same allowed words for text (from title), different layout/lighting.",
     ]
       .filter(Boolean)
       .join("\n")

@@ -1,26 +1,29 @@
 import { GoogleGenAI } from "@google/genai"
 
+let _textClient: GoogleGenAI | null = null
 
 function getClient(): GoogleGenAI {
-  const project = process.env.GOOGLE_CLOUD_PROJECT
-  const location = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1"
+  if (!_textClient) {
+    const project =
+      process.env.GOOGLE_CLOUD_PROJECT?.trim() ||
+      process.env.GCP_PROJECT_ID?.trim()
+    const location = process.env.GOOGLE_CLOUD_LOCATION?.trim() ?? "us-central1"
 
-  if (!project) throw new Error("GOOGLE_CLOUD_PROJECT is not set")
+    if (!project) throw new Error("GOOGLE_CLOUD_PROJECT is not set")
 
-  return new GoogleGenAI({
-    vertexai: true,
-    project,
-    location,
-    // Vercel: set GOOGLE_CLOUD_API_KEY in env vars
-    // Local:  leave unset — ADC from `gcloud auth application-default login` handles it
-    ...(process.env.GOOGLE_CLOUD_API_KEY
-      ? { apiKey: process.env.GOOGLE_CLOUD_API_KEY }
-      : {}),
-  })
+    _textClient = new GoogleGenAI({
+      vertexai: true,
+      project,
+      location,
+      ...(process.env.GOOGLE_CLOUD_API_KEY
+        ? { apiKey: process.env.GOOGLE_CLOUD_API_KEY }
+        : {}),
+    })
+  }
+  return _textClient
 }
 
 const TEXT_MODEL = "google/gemini-3.1-pro-preview"
-
 
 export interface ThumbnailConcept {
   id: string
@@ -49,7 +52,7 @@ export interface ThumbnailConcept {
 }
 
 export interface ThumbnailAnalysisResult {
-  topic: string
+  title: string
   style: string
   colorTheme: string
   concepts: ThumbnailConcept[]
@@ -64,23 +67,22 @@ export interface ThumbnailAnalysisResult {
 }
 
 export interface GenerateConceptsOptions {
-  topic: string
+  title: string
   style?: string
   colorTheme?: string
   userId: string
 }
 
-
 export async function generateThumbnailConcepts(
   options: GenerateConceptsOptions
 ): Promise<ThumbnailAnalysisResult> {
-  const { topic, style, colorTheme } = options
+  const { title, style, colorTheme } = options
   const ai = getClient()
 
   const prompt = `You are a world-class YouTube thumbnail strategist. Generate 3 GENUINELY DISTINCT thumbnail concepts.
 
 ## VIDEO CONTEXT
-Title (exact user input — treat as sacred wording for on-thumbnail text): "${topic}"
+Title (exact user input — treat as sacred wording for on-thumbnail text): "${title}"
 Platform: YouTube
 ${style ? `Visual Style hint: ${style}` : ""}
 ${colorTheme ? `Color Theme hint: ${colorTheme}` : ""}
@@ -90,7 +92,7 @@ Infer channel niche, audience, and emotion **only from this title** — no separ
 ## ON-THUMBNAIL TEXT — STRICT
 
 For **headline**, **thumbnailText**, and overlay copy:
-- Use **only words from the user's title** "${topic}", or a **short contiguous phrase** cut from it.
+- Use **only words from the user's title** "${title}", or a **short contiguous phrase** cut from it.
 - Hard limit: **3 to 5 words** on the thumbnail (max 5; prefer 3–4).
 - You may omit tiny words (a, the, to, my) only to fit; do NOT add new nouns/verbs the user did not write.
 - Keep numbers/symbols exactly ($200k, 10X, etc.).
@@ -175,7 +177,7 @@ Return ONLY valid JSON:
   }
 
   return {
-    topic,
+    title,
     style: style ?? "Auto",
     colorTheme: colorTheme ?? "Auto",
     ...parsed,
