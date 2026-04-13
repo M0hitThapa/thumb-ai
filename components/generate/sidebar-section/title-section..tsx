@@ -1,20 +1,28 @@
+"use client"
+
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { IconAsterisk } from "@tabler/icons-react"
+import { useGenerateStore } from "@/lib/store/generate-store"
 
-export const TitleSection = () => {
+export function TitleSection() {
+  const title = useGenerateStore((s) => s.title)
+  const setTitle = useGenerateStore((s) => s.setTitle)
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 px-1">
       <Label
         htmlFor="title"
-        className="text-xs font-semibold tracking-tight text-neutral-600 dark:text-neutral-400"
+        className="text-md font-semibold tracking-tight text-neutral-600 dark:text-neutral-400"
       >
-        Title{" "}
-        <span className="text-red-500">
-          <IconAsterisk />
-        </span>
+        Title <span className="text-red-500">*</span>
       </Label>
-      <Textarea id="title" />
+      <Textarea
+        id="title"
+        className="min-h-[80px] rounded-sm"
+        placeholder="e.g. I quit my $200k job to become a full-time YouTuber"
+        value={title}
+        onChange={(e) => setTitle(e.target.value.slice(0, 500))}
+      />
     </div>
   )
 }
