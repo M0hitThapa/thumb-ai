@@ -1,27 +1,4 @@
-import { GoogleGenAI } from "@google/genai"
-
-let _textClient: GoogleGenAI | null = null
-
-function getClient(): GoogleGenAI {
-  if (!_textClient) {
-    const project =
-      process.env.GOOGLE_CLOUD_PROJECT?.trim() ||
-      process.env.GCP_PROJECT_ID?.trim()
-    const location = process.env.GOOGLE_CLOUD_LOCATION?.trim() ?? "us-central1"
-
-    if (!project) throw new Error("GOOGLE_CLOUD_PROJECT is not set")
-
-    _textClient = new GoogleGenAI({
-      vertexai: true,
-      project,
-      location,
-      ...(process.env.GOOGLE_CLOUD_API_KEY
-        ? { apiKey: process.env.GOOGLE_CLOUD_API_KEY }
-        : {}),
-    })
-  }
-  return _textClient
-}
+import { getVertexGenAI } from "./vertex-genai"
 
 const TEXT_MODEL = "google/gemini-3.1-pro-preview"
 
@@ -77,7 +54,7 @@ export async function generateThumbnailConcepts(
   options: GenerateConceptsOptions
 ): Promise<ThumbnailAnalysisResult> {
   const { title, style, colorTheme } = options
-  const ai = getClient()
+  const ai = getVertexGenAI()
 
   const prompt = `You are a world-class YouTube thumbnail strategist. Generate 3 GENUINELY DISTINCT thumbnail concepts.
 

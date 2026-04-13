@@ -1,16 +1,6 @@
-import { GoogleGenAI, type Part } from "@google/genai"
+import { type Part } from "@google/genai"
 import type { ImageCategory } from "@/lib/image-category"
-
-let _imageClient: GoogleGenAI | null = null
-
-function getClient(): GoogleGenAI {
-  if (!_imageClient) {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not set")
-    _imageClient = new GoogleGenAI({ apiKey })
-  }
-  return _imageClient
-}
+import { getVertexGenAI } from "./vertex-genai"
 
 const IMAGE_MODEL = "gemini-3.1-flash-image-preview" as const
 
@@ -381,7 +371,7 @@ function extractFromParts(
 export async function generateThumbnailImages(
   req: GenerateImagesRequest
 ): Promise<GeneratedVariant[]> {
-  const ai = getClient()
+  const ai = getVertexGenAI()
   const hasImages = req.images.length > 0
   const imageParts = buildImageParts(req.images)
   const imageCtx = buildImageContext(req.images)
