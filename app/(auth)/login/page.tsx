@@ -1,8 +1,10 @@
 "use client"
 
 import { LoginForm } from "@/components/auth/login-form"
+import { AppLogo } from "@/components/icons/logos"
 
 import { IconLayoutRows } from "@tabler/icons-react"
+import Link from "next/link"
 
 export default function LoginPage() {
   return (
@@ -49,12 +51,17 @@ export default function LoginPage() {
         }}
       />
       <div className="absolute flex w-full max-w-sm flex-col gap-6">
-        <a href="#" className="flex items-center gap-2 self-center font-medium">
-          <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <IconLayoutRows className="size-4" />
+        <Link
+          href="#"
+          className="flex items-center gap-2 self-center font-medium"
+        >
+          <AppLogo />
+          <div>
+            <span className="text-xl font-semibold tracking-tight text-foreground">
+              Hookify
+            </span>
           </div>
-          Acme Inc.
-        </a>
+        </Link>
         <LoginForm />
       </div>
     </div>

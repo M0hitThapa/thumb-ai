@@ -18,6 +18,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 export default function Page() {
   const title = useGenerateStore((s) => s.title)
@@ -78,11 +79,12 @@ export default function Page() {
                     "aspect-video overflow-hidden rounded-xl border bg-muted/20 ring-1 ring-border"
                   )}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={`data:image/png;base64,${v.imageBase64}`}
                     alt={v.description || `Variant ${i + 1}`}
                     className="h-full w-full object-cover"
+                    height={360}
+                    width={640}
                   />
                 </div>
               ))}
