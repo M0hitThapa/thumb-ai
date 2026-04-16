@@ -3,28 +3,37 @@
 import type { SubmitEvent } from "react"
 import { DashboardShell } from "@/components/generate/layout/dashboard-shell"
 import { useThumbnailGenerate } from "@/hooks/use-thumbnail-generate"
-import { useImagesStore } from "@/lib/store/image-store"
+import { STRATEGY_LABELS, useImagesStore } from "@/lib/store/image-store"
 import { useGenerateStore } from "@/lib/store/generate-store"
+
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
 } from "@/components/ui/breadcrumb"
+
 import { Separator } from "@/components/ui/separator"
+
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { IconDownload } from "@tabler/icons-react"
 
 export default function Page() {
   const title = useGenerateStore((s) => s.title)
   const variants = useImagesStore((s) => s.variants)
   const generating = useImagesStore((s) => s.generating)
-  const clearImgResults = useImagesStore((s) => s.clearResults)
+  const selectedVariant = useImagesStore((s) => s.selectedVariant)
+  const setSelectedVariant = useImagesStore((s) => s.setSelectedVariant)
+
+  const currentVariant = variants?.[selectedVariant]
 
   const { handleGenerate, isGenerating } = useThumbnailGenerate(
     undefined,
@@ -37,6 +46,15 @@ export default function Page() {
     void handleGenerate(e, "")
   }
 
+  const handleDownload = () => {
+    if (!currentVariant) return
+
+    const link = document.createElement("a")
+    link.href = `data:image/png;base64,${currentVariant.imageBase64}`
+    link.download = `thumbnail-${Date.now()}.png`
+    link.click()
+  }
+
   const list = variants ?? []
 
   return (
@@ -45,7 +63,8 @@ export default function Page() {
         onSubmitGenerate={onSubmitGenerate}
         isGenerating={isGenerating}
       />
-      <SidebarInset>
+
+      <SidebarInset className="flex h-screen flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
@@ -61,7 +80,7 @@ export default function Page() {
           </Breadcrumb>
         </header>
 
-        <div className="flex flex-1 flex-col gap-4 p-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
           <div className="grid auto-rows-min gap-4 md:grid-cols-3">
             {generating &&
               [0, 1, 2].map((i) => (
@@ -73,10 +92,14 @@ export default function Page() {
 
             {!generating &&
               list.map((v, i) => (
-                <div
+                <button
                   key={i}
+                  onClick={() => setSelectedVariant(i)}
                   className={cn(
-                    "aspect-video overflow-hidden rounded-xl border bg-muted/20 ring-1 ring-border"
+                    "relative overflow-hidden rounded-xl border-2 text-left transition-all",
+                    i === selectedVariant
+                      ? "border-primary shadow-md"
+                      : "border-border hover:border-primary/50"
                   )}
                 >
                   <Image
@@ -86,7 +109,7 @@ export default function Page() {
                     height={360}
                     width={640}
                   />
-                </div>
+                </button>
               ))}
 
             {!generating && list.length === 0 && (
@@ -98,15 +121,31 @@ export default function Page() {
             )}
           </div>
 
-          <div className="flex min-h-30 flex-1 items-start justify-end rounded-xl bg-muted/50 p-3 md:min-h-min">
-            {list.length > 0 && (
-              <button
-                type="button"
-                className="text-sm text-muted-foreground underline"
-                onClick={clearImgResults}
-              >
-                Clear results
-              </button>
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+            {currentVariant && (
+              <div className="flex h-full w-full max-w-4xl flex-col overflow-hidden">
+                <div className="relative flex flex-1 overflow-hidden rounded-xl">
+                  <Image
+                    src={`data:image/png;base64,${currentVariant.imageBase64}`}
+                    alt="Selected thumbnail"
+                    fill
+                    className=""
+                    priority
+                  />
+
+                  <div className="absolute top-3 left-3 rounded-md bg-black/70 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                    {STRATEGY_LABELS[currentVariant.strategy] ??
+                      `Variant ${selectedVariant + 1}`}
+                  </div>
+                </div>
+
+                <div className="shrink-0 p-3">
+                  <Button onClick={handleDownload} className="w-full gap-2">
+                    <IconDownload className="h-4 w-4" />
+                    Download PNG
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </div>

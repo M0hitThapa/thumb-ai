@@ -7,7 +7,7 @@ import { getVertexGenAI } from "@/lib/vertex-genai"
 
 export const maxDuration = 30
 
-const TEXT_MODEL = "google/gemini-3.1-pro-preview"
+const TEXT_MODEL = "gemini-3.1-flash-lite-preview"
 
 const Schema = z.object({
   title: z.string().min(3).max(500),
