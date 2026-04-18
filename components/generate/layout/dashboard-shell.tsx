@@ -36,10 +36,9 @@ export function DashboardShell({
           <SidebarMenuItem className="flex items-center justify-between border-b border-sidebar-border py-[3.5px] pr-3 hover:bg-sidebar-accent">
             <SidebarMenuButton
               size="default"
-              asChild
               className="rounded-none py-7 [&_svg]:size-8!"
             >
-              <Link href="/">
+              <Link href="/" className="flex items-center gap-2">
                 <AppLogo />
                 <div>
                   <span className="text-xl font-semibold tracking-tight text-foreground">
@@ -48,6 +47,7 @@ export function DashboardShell({
                 </div>
               </Link>
             </SidebarMenuButton>
+
             <ModeToggle />
           </SidebarMenuItem>
         </SidebarMenu>

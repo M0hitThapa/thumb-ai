@@ -368,6 +368,24 @@ function extractFromParts(
   return { imageBase64, description }
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Vertex / Gemini quota or burst rate limits (parallel image calls often trigger 429). */
+function isResourceExhaustedError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false
+  const status = (err as { status?: unknown }).status
+  if (status === 429) return true
+  const message =
+    typeof (err as Error).message === "string"
+      ? (err as Error).message
+      : JSON.stringify(err)
+  return (
+    message.includes("RESOURCE_EXHAUSTED") || message.includes('"code":429')
+  )
+}
+
 export async function generateThumbnailImages(
   req: GenerateImagesRequest
 ): Promise<GeneratedVariant[]> {
@@ -381,7 +399,13 @@ export async function generateThumbnailImages(
   const aiPersonBlock = buildAiPersonBlock(req)
   const scenarioBlock = buildScenarioBlock(req)
 
-  const promises = VARIATION_CONFIGS.slice(0, count).map(async (config) => {
+  const configs = VARIATION_CONFIGS.slice(0, count)
+  const results: GeneratedVariant[] = []
+  const maxAttempts = 4
+
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i]!
+
     const fullPrompt = [
       `Create a high-CTR YouTube thumbnail for this video.`,
       `Video title: "${req.title}"`,
@@ -412,33 +436,53 @@ export async function generateThumbnailImages(
       ? [{ role: "user" as const, parts: allParts }]
       : fullPrompt
 
-    try {
-      const response = await ai.models.generateContent({
-        model: IMAGE_MODEL,
-        contents: contents as Parameters<
-          typeof ai.models.generateContent
-        >[0]["contents"],
-        config: {
-          responseModalities: ["TEXT", "IMAGE"],
-          imageConfig: { aspectRatio: "16:9", imageSize: "1K" },
-        },
-      })
+    let variant: GeneratedVariant | null = null
 
-      const candidateParts = response.candidates?.[0]?.content?.parts ?? []
-      const result = extractFromParts(candidateParts)
-      if (!result) return null
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: IMAGE_MODEL,
+          contents: contents as Parameters<
+            typeof ai.models.generateContent
+          >[0]["contents"],
+          config: {
+            responseModalities: ["TEXT", "IMAGE"],
+            imageConfig: { aspectRatio: "16:9", imageSize: "1K" },
+          },
+        })
 
-      return {
-        imageBase64: result.imageBase64,
-        description: result.description,
-        strategy: config.strategy,
-      } satisfies GeneratedVariant
-    } catch (err) {
-      console.error(`[Gemini] Variant "${config.strategy}" failed:`, err)
-      return null
+        const candidateParts = response.candidates?.[0]?.content?.parts ?? []
+        const extracted = extractFromParts(candidateParts)
+        if (!extracted) break
+
+        variant = {
+          imageBase64: extracted.imageBase64,
+          description: extracted.description,
+          strategy: config.strategy,
+        }
+        break
+      } catch (err) {
+        const canRetry =
+          isResourceExhaustedError(err) && attempt < maxAttempts - 1
+        if (canRetry) {
+          const delayMs = Math.round(1800 * 2 ** attempt + Math.random() * 600)
+          console.warn(
+            `[Gemini] Variant "${config.strategy}" hit quota/rate limit (429); retry in ${delayMs}ms (${attempt + 2}/${maxAttempts})`
+          )
+          await sleep(delayMs)
+          continue
+        }
+        console.error(`[Gemini] Variant "${config.strategy}" failed:`, err)
+        break
+      }
     }
-  })
 
-  const results = await Promise.all(promises)
-  return results.filter((v): v is GeneratedVariant => v !== null)
+    if (variant) results.push(variant)
+
+    if (i < configs.length - 1) {
+      await sleep(450)
+    }
+  }
+
+  return results
 }

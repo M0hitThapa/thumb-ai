@@ -24,7 +24,14 @@ import {
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { IconDownload } from "@tabler/icons-react"
+import { IconDownload, IconPhoto } from "@tabler/icons-react"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 
 export default function Page() {
   const title = useGenerateStore((s) => s.title)
@@ -56,6 +63,7 @@ export default function Page() {
   }
 
   const list = variants ?? []
+  const showEmptyState = !generating && list.length === 0
 
   return (
     <SidebarProvider>
@@ -81,47 +89,57 @@ export default function Page() {
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            {generating &&
-              [0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-video animate-pulse rounded-xl bg-muted/50"
-                />
-              ))}
-
-            {!generating &&
-              list.map((v, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedVariant(i)}
-                  className={cn(
-                    "relative overflow-hidden rounded-xl border-2 text-left transition-all",
-                    i === selectedVariant
-                      ? "border-primary shadow-md"
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  <Image
-                    src={`data:image/png;base64,${v.imageBase64}`}
-                    alt={v.description || `Variant ${i + 1}`}
-                    className="h-full w-full object-cover"
-                    height={360}
-                    width={640}
+          {!showEmptyState && (
+            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+              {generating &&
+                [0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="aspect-video animate-pulse rounded-xl bg-muted/50"
                   />
-                </button>
-              ))}
+                ))}
 
-            {!generating && list.length === 0 && (
-              <>
-                <div className="aspect-video rounded-xl bg-muted/50" />
-                <div className="aspect-video rounded-xl bg-muted/50" />
-                <div className="aspect-video rounded-xl bg-muted/50" />
-              </>
-            )}
-          </div>
+              {!generating &&
+                list.map((v, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedVariant(i)}
+                    className={cn(
+                      "relative overflow-hidden rounded-xl border-2 text-left transition-all",
+                      i === selectedVariant
+                        ? "border-primary shadow-md"
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    <Image
+                      src={`data:image/png;base64,${v.imageBase64}`}
+                      alt={v.description || `Variant ${i + 1}`}
+                      className="h-full w-full object-cover"
+                      height={360}
+                      width={640}
+                    />
+                  </button>
+                ))}
+            </div>
+          )}
 
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+            {showEmptyState && (
+              <Empty className="max-w-md ">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <IconPhoto aria-hidden />
+                  </EmptyMedia>
+                  <EmptyTitle>No thumbnails yet</EmptyTitle>
+                  <EmptyDescription>
+                    Set your video title and optional references in the sidebar,
+                    then use Generate to create three Hookify thumbnail
+                    variants.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+
             {currentVariant && (
               <div className="flex h-full w-full max-w-4xl flex-col overflow-hidden">
                 <div className="relative flex flex-1 overflow-hidden rounded-xl">
