@@ -85,7 +85,8 @@ interface ImagesState {
   setSelectedPalette: (v: string) => void
   setUseAiPerson: (v: boolean) => void
 
-  addImages: (images: UploadedImage[]) => void
+  /** @returns start index of the appended slice */
+  addImages: (images: UploadedImage[]) => number
   removeImage: (index: number) => void
   updateImageClassification: (
     index: number,
@@ -98,6 +99,8 @@ interface ImagesState {
   getActiveReferenceImage: () => UploadedImage | null
 
   getPersonImages: () => UploadedImage[]
+  /** True if any upload is classified as a person (user-supplied face/model). */
+  hasUploadedPersonImage: () => boolean
   getAllImagesForGeneration: () => UploadedImage[]
 
   addPersonImages: (images: UploadedImage[]) => void
@@ -138,8 +141,11 @@ export const useImagesStore = create<ImagesState>()((set, get) => ({
 
   setUseAiPerson: (useAiPerson) => set({ useAiPerson }),
 
-  addImages: (images) =>
-    set((s) => ({ uploadedImages: [...s.uploadedImages, ...images] })),
+  addImages: (images) => {
+    const start = get().uploadedImages.length
+    set((s) => ({ uploadedImages: [...s.uploadedImages, ...images] }))
+    return start
+  },
 
   removeImage: (index) =>
     set((s) => ({
@@ -206,6 +212,9 @@ export const useImagesStore = create<ImagesState>()((set, get) => ({
           (img) => !img.category || img.category === "unknown"
         )
   },
+
+  hasUploadedPersonImage: () =>
+    get().uploadedImages.some((img) => img.category === "person"),
 
   getAllImagesForGeneration: () => {
     const { uploadedImages } = get()

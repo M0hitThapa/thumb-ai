@@ -209,10 +209,29 @@ function buildImageContext(images: ClassifiedImage[]): string {
   return lines.join("\n")
 }
 
+function hasUserProvidedPersonImage(req: GenerateImagesRequest): boolean {
+  return req.images.some((img) => img.category === "person")
+}
+
+function buildNoPersonSubjectBlock(req: GenerateImagesRequest): string {
+  if (req.useAiPerson) return ""
+  if (hasUserProvidedPersonImage(req)) return ""
+
+  return `
+## NO HUMAN SUBJECT (required)
+
+The user did not upload a person photo and did not enable an AI-generated person.
+
+Create a thumbnail with **no prominent human face, body, or realistic person** as the focus. The hero visual must be something else: objects, a device or screen showing UI, scenery, diagrams, bold typography, icons, abstract graphics, or branded elements that fit the title.
+
+Do not invent a stock-photo-style person or influencer face — there must be no human as the main subject.
+`.trim()
+}
+
 function buildAiPersonBlock(req: GenerateImagesRequest): string {
   if (!req.useAiPerson) return ""
 
-  const hasUploadedPerson = req.images.some((img) => img.category === "person")
+  const hasUploadedPerson = hasUserProvidedPersonImage(req)
   if (hasUploadedPerson) return ""
 
   return `
@@ -253,7 +272,7 @@ function buildScenarioBlock(req: GenerateImagesRequest): string {
       hasReference
         ? "Use the style reference image to guide your colors, composition, and mood."
         : "Choose a visual concept that best tells the story of the video title.",
-      "Generate visuals, backgrounds, text, and any subjects from imagination."
+      "Do not add a human as the main subject — follow the NO HUMAN SUBJECT rules (objects, type, graphics, or environment only)."
     )
   } else if (noUploadedImages && req.useAiPerson) {
     lines.push(
@@ -397,6 +416,7 @@ export async function generateThumbnailImages(
   const count = Math.min(Math.max(1, req.variantCount), 3) as 1 | 2 | 3
 
   const aiPersonBlock = buildAiPersonBlock(req)
+  const noPersonSubjectBlock = buildNoPersonSubjectBlock(req)
   const scenarioBlock = buildScenarioBlock(req)
 
   const configs = VARIATION_CONFIGS.slice(0, count)
@@ -416,6 +436,8 @@ export async function generateThumbnailImages(
       scenarioBlock,
       "",
       aiPersonBlock,
+      "",
+      noPersonSubjectBlock,
       "",
       imageCtx,
       "",

@@ -17,7 +17,6 @@ export function useThumbnailGenerate(
 
   const prompt = useImagesStore((s) => s.prompt)
   const uploadedImages = useImagesStore((s) => s.uploadedImages)
-  const useAiPerson = useImagesStore((s) => s.useAiPerson)
   const getActiveReferenceImage = useImagesStore(
     (s) => s.getActiveReferenceImage
   )
@@ -43,6 +42,13 @@ export function useThumbnailGenerate(
     clearImgResults()
 
     setImgGenerating(true)
+
+    const { hasUploadedPersonImage, useAiPerson: wantAiPerson } =
+      useImagesStore.getState()
+    const effectiveUseAiPerson = hasUploadedPersonImage()
+      ? false
+      : wantAiPerson
+
     const imagesForAPI = uploadedImages
       .filter((img) => img.base64 && img.base64.length > 0)
       .map((img) => ({
@@ -87,7 +93,7 @@ export function useThumbnailGenerate(
           colorTheme: colorThemeStr,
           variantCount: 3,
           images: imagesForAPI,
-          useAiPerson,
+          useAiPerson: effectiveUseAiPerson,
         }),
         signal: controller.signal,
       })

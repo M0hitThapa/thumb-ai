@@ -4,24 +4,29 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
+
 import { useGenerateStore } from "@/lib/store/generate-store"
 import { useImagesStore } from "@/lib/store/image-store"
-import { cn } from "@/lib/utils"
+import { CATEGORY_LABELS } from "@/lib/category-labels"
+import { parseImageCategory } from "@/lib/image-category"
+import type { ClassifyImageResult } from "@/lib/uploaded-image"
 import {
   IconLoader2,
   IconWand,
   IconCopy,
   IconX,
   IconCheck,
-  IconSquareRoundedPlus,
+  IconPaperclip,
 } from "@tabler/icons-react"
-import Image from "next/image"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import { Switch } from "@/components/ui/switch"
 
+const MAX_TITLE_LEN = 500
+const MAX_IMAGES_COUNT = 6
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024
 
-export async function readImageFiles(file: File): Promise<{
+async function readImageFiles(file: File): Promise<{
   base64: string
   mimeType: string
   preview: string
@@ -42,53 +47,95 @@ export async function readImageFiles(file: File): Promise<{
   })
 }
 
+async function classifyImage(
+  base64: string,
+  mimeType: string
+): Promise<ClassifyImageResult | null> {
+  try {
+    const res = await fetch("/api/classify-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ base64, mimeType }),
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as Partial<{
+      category: string
+      label: string
+      description: string
+      hasFace: boolean
+    }>
+    return {
+      category: parseImageCategory(data.category),
+      label: String(data.label ?? ""),
+      description: String(data.description ?? ""),
+      hasFace: Boolean(data.hasFace),
+    }
+  } catch {
+    return null
+  }
+}
+
 export function TitleSection() {
   const title = useGenerateStore((s) => s.title)
   const setTitle = useGenerateStore((s) => s.setTitle)
 
-  const uploadedImage = useImagesStore((s) => s.uploadedImages)
+  const uploadedImages = useImagesStore((s) => s.uploadedImages)
   const addImages = useImagesStore((s) => s.addImages)
   const removeImage = useImagesStore((s) => s.removeImage)
+  const updateImageClassification = useImagesStore(
+    (s) => s.updateImageClassification
+  )
+  const useAiPerson = useImagesStore((s) => s.useAiPerson)
+  const setUseAiPerson = useImagesStore((s) => s.setUseAiPerson)
+  const hasUploadedPersonImage = useImagesStore((s) => s.hasUploadedPersonImage)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const hasPersonPhoto = hasUploadedPersonImage()
+
+  useEffect(() => {
+    if (hasPersonPhoto && useAiPerson) setUseAiPerson(false)
+  }, [hasPersonPhoto, useAiPerson, setUseAiPerson])
 
   const [titleVariants, setTitleVariants] = useState<string[]>([])
   const [titleVariantsLoading, setTitleVariantsLoading] = useState(false)
   const [titleVariantsError, setTitleVariantsError] = useState("")
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
-  const MAX_IMAGES_COUNT = 6
-  const canAddImages = uploadedImage.length < MAX_IMAGES_COUNT
+  const canAddImages = uploadedImages.length < MAX_IMAGES_COUNT
 
   async function handlePickFiles(files: FileList) {
-    const remaining = MAX_IMAGES_COUNT - uploadedImage.length
-
+    const remaining = MAX_IMAGES_COUNT - uploadedImages.length
     if (remaining <= 0) {
       toast.error(`Maximum ${MAX_IMAGES_COUNT} images`)
       return
     }
 
-    const slice = Array.from(files).slice(0, remaining)
-
-    const added: {
-      base64: string
-      mimeType: string
-      preview: string
-      category: "unknown"
-    }[] = []
-
-    for (const file of slice) {
+    for (const file of Array.from(files).slice(0, remaining)) {
       const row = await readImageFiles(file)
-
       if (!row) {
         toast.error(`${file.name} is too large or not an image`)
         continue
       }
 
-      added.push({ ...row, category: "unknown" })
-    }
+      const newIndex = addImages([{ ...row, classifying: true }])
 
-    if (added.length) addImages(added)
+      void classifyImage(row.base64, row.mimeType).then((result) => {
+        if (result) {
+          updateImageClassification(newIndex, {
+            category: result.category,
+            label: result.label,
+            description: result.description,
+            hasFace: result.hasFace,
+            classifying: false,
+          })
+        } else {
+          updateImageClassification(newIndex, {
+            classifying: false,
+            category: "unknown",
+          })
+        }
+      })
+    }
   }
 
   async function handleGenerateTitleVariants() {
@@ -105,7 +152,10 @@ export function TitleSection() {
         body: JSON.stringify({ title: title.trim() }),
       })
 
-      const data = await res.json()
+      const data = (await res.json()) as {
+        variants?: string[]
+        error?: string
+      }
 
       if (!res.ok || !data.variants) {
         setTitleVariantsError(data.error ?? "Could not generate variants.")
@@ -123,7 +173,7 @@ export function TitleSection() {
   function handleCopy(text: string, index: number) {
     void navigator.clipboard.writeText(text)
     setCopiedIndex(index)
-    setTimeout(() => setCopiedIndex(null), 1000)
+    window.setTimeout(() => setCopiedIndex(null), 1000)
   }
 
   return (
@@ -132,46 +182,59 @@ export function TitleSection() {
         Title <span className="text-red-500">*</span>
       </Label>
 
-      <div className={cn("relative")}>
+      <div className="relative">
         <Textarea
-          className="e squircle min-h-30 border-none bg-white pt-2 pb-28 shadow-sm shadow-neutral-300 dark:bg-neutral-800 dark:shadow-neutral-950"
+          className="squircle min-h-30 resize-none border-none bg-white pt-2 pb-32 shadow-sm shadow-neutral-300 dark:bg-neutral-800 dark:shadow-neutral-950"
           value={title}
           onChange={(e) => {
-            setTitle(e.target.value.slice(0, 100))
+            setTitle(e.target.value.slice(0, MAX_TITLE_LEN))
             setTitleVariants([])
             setTitleVariantsError("")
           }}
         />
 
-        {uploadedImage.length > 0 && (
+        {uploadedImages.length > 0 && (
           <div className="pointer-events-none absolute inset-x-0 bottom-12 flex gap-2 overflow-x-auto px-3">
-            {uploadedImage.map((img, i) => (
+            {uploadedImages.map((img, i) => (
               <div
                 key={`${i}-${img.preview.slice(0, 20)}`}
-                className="group pointer-events-auto relative size-14 shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-muted dark:border-neutral-600"
+                className="group squircle pointer-events-auto relative size-14 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-muted dark:border-neutral-600"
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={img.preview}
                   alt=""
                   className="size-full object-cover"
-                  width={100}
-                  height={100}
                 />
 
                 <button
                   type="button"
                   onClick={() => removeImage(i)}
                   className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-full bg-background/90 opacity-0 transition group-hover:opacity-100 hover:bg-red-500"
+                  aria-label="Remove"
                 >
                   <IconX className="size-3" />
                 </button>
+
+                <div className="absolute right-0 bottom-0 left-0 px-0.5 py-0.5">
+                  {img.classifying ? (
+                    <div className="flex items-center justify-center gap-0.5 rounded bg-black/65 py-0.5 text-[8px] text-white">
+                      <IconLoader2 className="size-2.5 shrink-0 animate-spin" />
+                      <span className="truncate">Analysing…</span>
+                    </div>
+                  ) : (
+                    <div className="truncate rounded bg-black/65 px-0.5 py-0.5 text-center text-[8px] font-semibold text-white">
+                      {CATEGORY_LABELS[img.category ?? "unknown"]}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         )}
 
         <div className="pointer-events-none absolute inset-x-0 bottom-2 flex items-center justify-between px-2">
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto flex items-center gap-2">
             <Button
               type="button"
               variant="ghost"
@@ -179,9 +242,31 @@ export function TitleSection() {
               disabled={!canAddImages}
               onClick={() => fileInputRef.current?.click()}
               className="size-10 cursor-pointer rounded-xl"
+              aria-label="Add images"
             >
-              <IconSquareRoundedPlus className="size-6 text-neutral-600 dark:text-neutral-400" />
+              <IconPaperclip className="size-6 text-neutral-500 dark:text-neutral-400" />
             </Button>
+            <div className="flex max-w-[140px] flex-col gap-0.5 sm:max-w-none">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="ai-avatar"
+                  checked={useAiPerson}
+                  disabled={hasPersonPhoto}
+                  onCheckedChange={setUseAiPerson}
+                />
+                <Label
+                  htmlFor="ai-avatar"
+                  className="cursor-pointer text-sm font-medium text-neutral-600 dark:text-neutral-400"
+                >
+                  AI person
+                </Label>
+              </div>
+              {hasPersonPhoto ? (
+                <p className="pl-1 text-[9px] leading-tight text-muted-foreground">
+                  Using your uploaded person photo
+                </p>
+              ) : null}
+            </div>
           </div>
 
           <div className="pointer-events-auto">
@@ -216,11 +301,15 @@ export function TitleSection() {
         />
       </div>
 
-      {titleVariantsError && (
-        <p className="text-xs text-red-500">{titleVariantsError}</p>
-      )}
+      <p className="text-[11px] text-muted-foreground">
+        {title.length}/{MAX_TITLE_LEN}
+      </p>
 
-      {titleVariants.length > 0 && (
+      {titleVariantsError ? (
+        <p className="text-xs text-red-500">{titleVariantsError}</p>
+      ) : null}
+
+      {titleVariants.length > 0 ? (
         <div className="rounded-md border bg-muted/40">
           <div className="flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase">
             Title Ideas
@@ -241,6 +330,7 @@ export function TitleSection() {
                 className="flex items-center gap-2 border-t px-3 py-2 text-xs hover:bg-muted/60"
               >
                 <button
+                  type="button"
                   className="flex flex-1 text-left"
                   onClick={() => setTitle(v)}
                 >
@@ -264,7 +354,7 @@ export function TitleSection() {
             ))}
           </ScrollArea>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
