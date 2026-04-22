@@ -1,31 +1,43 @@
 "use client"
 
 import type { SubmitEvent } from "react"
-import { useGenerateStore } from "@/lib/store/generate-store"
-import { useImagesStore, type GeneratedVariant } from "@/lib/store/image-store"
+import { create } from "zustand"
+import { useTitleAndUploadsStore } from "@/components/generate/sidebar-section/title-section"
+import type { GeneratedVariant } from "@/lib/types"
 import { toast } from "sonner"
 
 const GENERATE_FETCH_TIMEOUT_MS = 315_000
+
+interface ThumbnailGenerateResultsState {
+  variants: GeneratedVariant[]
+  generating: boolean
+  setGenerating: (v: boolean) => void
+  setVariants: (variants: GeneratedVariant[]) => void
+  clearResults: () => void
+}
+
+export const useThumbnailGenerateResultsStore =
+  create<ThumbnailGenerateResultsState>()((set) => ({
+    variants: [],
+    generating: false,
+    setGenerating: (generating) => set({ generating }),
+    setVariants: (variants) => set({ variants }),
+    clearResults: () => set({ variants: [] }),
+  }))
 
 export function useThumbnailGenerate(
   onGenerate: ((e: SubmitEvent) => void) | undefined,
   propIsGenerating: boolean
 ) {
-  const title = useGenerateStore((s) => s.title)
-  const style = useGenerateStore((s) => s.style)
-  const clearResult = useGenerateStore((s) => s.clearResult)
-
-  const prompt = useImagesStore((s) => s.prompt)
-  const uploadedImages = useImagesStore((s) => s.uploadedImages)
-  const getActiveReferenceImage = useImagesStore(
-    (s) => s.getActiveReferenceImage
+  const title = useTitleAndUploadsStore((s) => s.title)
+  const uploadedImages = useTitleAndUploadsStore((s) => s.uploadedImages)
+  const imgGenerating = useThumbnailGenerateResultsStore((s) => s.generating)
+  const setImgGenerating = useThumbnailGenerateResultsStore(
+    (s) => s.setGenerating
   )
-  const imgGenerating = useImagesStore((s) => s.generating)
-  const setImgGenerating = useImagesStore((s) => s.setGenerating)
-  const setVariants = useImagesStore((s) => s.setVariants)
-  const clearImgResults = useImagesStore((s) => s.clearResults)
+  const setVariants = useThumbnailGenerateResultsStore((s) => s.setVariants)
+  const clearResults = useThumbnailGenerateResultsStore((s) => s.clearResults)
 
-  const referenceImage = getActiveReferenceImage()
   const isGenerating = onGenerate ? propIsGenerating : imgGenerating
 
   async function handleGenerate(e: SubmitEvent, colorThemeStr: string) {
@@ -38,13 +50,12 @@ export function useThumbnailGenerate(
       toast.error("Please enter your video title")
       return
     }
-    clearResult()
-    clearImgResults()
+    clearResults()
 
     setImgGenerating(true)
 
     const { hasUploadedPersonImage, useAiPerson: wantAiPerson } =
-      useImagesStore.getState()
+      useTitleAndUploadsStore.getState()
     const effectiveUseAiPerson = hasUploadedPersonImage()
       ? false
       : wantAiPerson
@@ -60,22 +71,6 @@ export function useThumbnailGenerate(
         hasFace: img.hasFace ?? false,
       }))
 
-    if (
-      referenceImage &&
-      referenceImage.base64 &&
-      referenceImage.base64.length > 0
-    ) {
-      imagesForAPI.push({
-        base64: referenceImage.base64,
-        mimeType: referenceImage.mimeType,
-        category: "reference_style",
-        label: referenceImage.label || "Thumbnail style reference",
-        description:
-          "STYLE REFERENCE - Analyze this thumbnail's composition, color palette, text placement, contrast levels, visual hierarchy, and overall aesthetic. Use this as INSPIRATION to create a fresh thumbnail with similar visual energy and style principles, but adapted for the new video title. Do NOT copy directly - understand WHY this works and apply those principles.",
-        hasFace: referenceImage.hasFace ?? false,
-      })
-    }
-
     const controller = new AbortController()
     const timeoutId = setTimeout(
       () => controller.abort(),
@@ -88,8 +83,7 @@ export function useThumbnailGenerate(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
-          prompt: prompt.trim() || undefined,
-          style,
+          style: "",
           colorTheme: colorThemeStr,
           variantCount: 3,
           images: imagesForAPI,

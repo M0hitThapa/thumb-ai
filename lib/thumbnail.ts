@@ -1,54 +1,11 @@
+import type {
+  GenerateConceptsOptions,
+  ThumbnailAnalysisResult,
+  ThumbnailConcept,
+} from "@/lib/types"
 import { getVertexGenAI } from "./vertex-genai"
 
 const TEXT_MODEL = "google/gemini-3.1-pro-preview"
-
-export interface ThumbnailConcept {
-  id: string
-  title: string
-  headline: string
-  subheadline?: string
-  thumbnailText?: string
-  textPlacement?: string
-  textStyle?: string
-  visualDescription: string
-  backgroundDescription: string
-  subjectDescription?: string
-  composition?: string
-  lighting?: string
-  colorPalette: string[]
-  fontStyle: string
-  emojiAccents: string[]
-  props?: string[]
-  designTips: string[]
-  ctrScore: number
-  ctrReasoning: string
-  psychologyTrigger: string
-  strategy: "curiosity" | "authority" | "shock" | "emotion" | "value"
-  emotionalImpact?: string
-  platformOptimisation?: string
-}
-
-export interface ThumbnailAnalysisResult {
-  title: string
-  style: string
-  colorTheme: string
-  concepts: ThumbnailConcept[]
-  generalAdvice: string
-  autoInferences?: {
-    detectedEmotion: string
-    recommendedColors: string
-    platformTip: string
-  }
-  avoidList: string[]
-  bestPractices: string[]
-}
-
-export interface GenerateConceptsOptions {
-  title: string
-  style?: string
-  colorTheme?: string
-  userId: string
-}
 
 export async function generateThumbnailConcepts(
   options: GenerateConceptsOptions
@@ -69,17 +26,19 @@ Infer channel niche, audience, and emotion **only from this title** — no separ
 ## ON-THUMBNAIL TEXT — STRICT
 
 For **headline**, **thumbnailText**, and overlay copy:
-- Use **only words from the user's title** "${title}", or a **short contiguous phrase** cut from it.
-- Hard limit: **3 to 5 words** on the thumbnail (max 5; prefer 3–4).
-- You may omit tiny words (a, the, to, my) only to fit; do NOT add new nouns/verbs the user did not write.
+- Use the user's **FULL title** "${title}" or a very close version of it. Keep ALL key words.
+- You may ONLY shorten if the title is longer than ~8 words — even then, keep every noun, verb, number, and adjective. Only drop filler words (a, the, to, my, and, in, for, of).
+- The shortened version MUST still read as the same claim/story as the original.
 - Keep numbers/symbols exactly ($200k, 10X, etc.).
-- Do NOT invent unrelated hooks (e.g. "SHOCKING" if not in the title).
+- Do NOT invent new words or unrelated hooks (e.g. "SHOCKING" if not in the title).
+- EVERY word must be COMPLETE — no partial words, no letters cut off.
 
-**Good:** Title "I Quit My $200k Job to Travel" → "QUIT MY $200K JOB" (≤5 words).
-**Bad:** New phrase with words not in the title.
+**Good:** Title "I Quit My $200k Job to Travel" → "I QUIT MY $200K JOB TO TRAVEL" (full title) or "QUIT MY $200K JOB TO TRAVEL" (dropped only "I").
+**Bad:** "QUIT $200K JOB" (too much lost) or "SHOCKING JOB QUIT" (invented words).
 
 ### Text placement
 - Corner or edge only (top-left, top-right, bottom-left, bottom-right). Never on a face.
+- Text can span 1–2 lines if needed. Break at natural phrase points.
 
 ### Archetypes & CTR
 Curiosity gap, authority/value, shock/emotion — high contrast, outcome-focused, saturated colors unless color hint says otherwise.
@@ -90,9 +49,9 @@ Return ONLY valid JSON:
     {
       "id": "concept_1",
       "title": "Strategy name e.g. 'The Curiosity Gap'",
-      "headline": "3–5 words from user title only",
-      "subheadline": "Optional; from user title, max 6 words",
-      "thumbnailText": "3–5 words max from user title",
+      "headline": "Full title or faithful shortened version",
+      "subheadline": "Optional; from user title",
+      "thumbnailText": "Full title or close version — every word complete, no clipping",
       "textPlacement": "top-left | top-right | bottom-left | bottom-right",
       "textStyle": "e.g. Bold Impact white with black stroke",
       "visualDescription": "4–5 sentences; text vs face placement",

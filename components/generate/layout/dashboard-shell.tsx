@@ -3,23 +3,23 @@
 import * as React from "react"
 import type { SubmitEvent } from "react"
 import {
-  Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/theme-provider"
 import Link from "next/link"
 import { AppLogo } from "@/components/icons/logos"
-import { TitleSection } from "../sidebar-section/title-section."
+import { TitleSection } from "../sidebar-section/title-section"
 import { IconLoader2 } from "@tabler/icons-react"
+import { ColorSection } from "../sidebar-section/color-section"
+import { cn } from "@/lib/utils"
 
-type DashboardShellProps = React.ComponentProps<typeof Sidebar> & {
+type DashboardShellProps = React.ComponentProps<"aside"> & {
   onSubmitGenerate: (e: SubmitEvent<HTMLFormElement>) => void
   isGenerating: boolean
 }
@@ -27,10 +27,17 @@ type DashboardShellProps = React.ComponentProps<typeof Sidebar> & {
 export function DashboardShell({
   onSubmitGenerate,
   isGenerating,
+  className,
   ...props
 }: DashboardShellProps) {
   return (
-    <Sidebar {...props}>
+    <aside
+      className={cn(
+        "flex min-h-0 w-full min-w-0 flex-col bg-sidebar text-sidebar-foreground md:h-full md:w-80 md:shrink-0 md:border-r md:border-sidebar-border lg:w-96 xl:w-[32rem]",
+        className
+      )}
+      {...props}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between border-b border-sidebar-border py-[3.5px] pr-3 hover:bg-sidebar-accent">
@@ -55,6 +62,7 @@ export function DashboardShell({
 
       <SidebarContent className="space-y-2 px-2 pt-2">
         <TitleSection />
+        <ColorSection />
       </SidebarContent>
 
       <SidebarFooter>
@@ -75,7 +83,8 @@ export function DashboardShell({
           </Button>
         </form>
       </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+    </aside>
   )
 }
+
+

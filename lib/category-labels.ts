@@ -1,4 +1,4 @@
-import type { ImageCategory } from "@/lib/image-category"
+import type { ImageCategory } from "@/lib/types"
 
 export const CATEGORY_LABELS: Record<ImageCategory, string> = {
   person: "👤 Person",

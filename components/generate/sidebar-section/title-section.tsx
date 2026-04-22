@@ -1,15 +1,14 @@
 "use client"
 
+import { create } from "zustand"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 
-import { useGenerateStore } from "@/lib/store/generate-store"
-import { useImagesStore } from "@/lib/store/image-store"
 import { CATEGORY_LABELS } from "@/lib/category-labels"
 import { parseImageCategory } from "@/lib/image-category"
-import type { ClassifyImageResult } from "@/lib/uploaded-image"
+import type { ClassifyImageResult, UploadedImage } from "@/lib/types"
 import {
   IconLoader2,
   IconWand,
@@ -21,6 +20,52 @@ import {
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
+
+interface TitleAndUploadsState {
+  title: string
+  uploadedImages: UploadedImage[]
+  useAiPerson: boolean
+  setTitle: (v: string) => void
+  setUseAiPerson: (v: boolean) => void
+  hasUploadedPersonImage: () => boolean
+  addImages: (images: UploadedImage[]) => number
+  removeImage: (index: number) => void
+  updateImageClassification: (
+    index: number,
+    data: Partial<UploadedImage>
+  ) => void
+}
+
+export const useTitleAndUploadsStore = create<TitleAndUploadsState>()(
+  (set, get) => ({
+    title: "",
+    uploadedImages: [],
+    useAiPerson: false,
+
+    setTitle: (title) => set({ title }),
+    setUseAiPerson: (useAiPerson) => set({ useAiPerson }),
+    hasUploadedPersonImage: () =>
+      get().uploadedImages.some((img) => img.category === "person"),
+
+    addImages: (images) => {
+      const start = get().uploadedImages.length
+      set((s) => ({ uploadedImages: [...s.uploadedImages, ...images] }))
+      return start
+    },
+
+    removeImage: (index) =>
+      set((s) => ({
+        uploadedImages: s.uploadedImages.filter((_, i) => i !== index),
+      })),
+
+    updateImageClassification: (index, data) =>
+      set((s) => ({
+        uploadedImages: s.uploadedImages.map((img, i) =>
+          i === index ? { ...img, ...data } : img
+        ),
+      })),
+  })
+)
 
 const MAX_TITLE_LEN = 500
 const MAX_IMAGES_COUNT = 6
@@ -76,18 +121,20 @@ async function classifyImage(
 }
 
 export function TitleSection() {
-  const title = useGenerateStore((s) => s.title)
-  const setTitle = useGenerateStore((s) => s.setTitle)
+  const title = useTitleAndUploadsStore((s) => s.title)
+  const setTitle = useTitleAndUploadsStore((s) => s.setTitle)
 
-  const uploadedImages = useImagesStore((s) => s.uploadedImages)
-  const addImages = useImagesStore((s) => s.addImages)
-  const removeImage = useImagesStore((s) => s.removeImage)
-  const updateImageClassification = useImagesStore(
+  const uploadedImages = useTitleAndUploadsStore((s) => s.uploadedImages)
+  const addImages = useTitleAndUploadsStore((s) => s.addImages)
+  const removeImage = useTitleAndUploadsStore((s) => s.removeImage)
+  const updateImageClassification = useTitleAndUploadsStore(
     (s) => s.updateImageClassification
   )
-  const useAiPerson = useImagesStore((s) => s.useAiPerson)
-  const setUseAiPerson = useImagesStore((s) => s.setUseAiPerson)
-  const hasUploadedPersonImage = useImagesStore((s) => s.hasUploadedPersonImage)
+  const useAiPerson = useTitleAndUploadsStore((s) => s.useAiPerson)
+  const setUseAiPerson = useTitleAndUploadsStore((s) => s.setUseAiPerson)
+  const hasUploadedPersonImage = useTitleAndUploadsStore(
+    (s) => s.hasUploadedPersonImage
+  )
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const hasPersonPhoto = hasUploadedPersonImage()

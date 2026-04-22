@@ -1,24 +1,7 @@
-/**
- * Same values as POST /api/classify-image JSON response.
- */
-export type ImageCategory =
-  | "person"
-  | "background"
-  | "props"
-  | "reference_style"
-  | "before_after"
-  | "text_graphic"
-  | "unknown"
+import { IMAGE_CATEGORY_LIST, type ImageCategory } from "./types"
 
-export const IMAGE_CATEGORY_LIST: readonly ImageCategory[] = [
-  "person",
-  "background",
-  "props",
-  "reference_style",
-  "before_after",
-  "text_graphic",
-  "unknown",
-] as const
+export { IMAGE_CATEGORY_LIST }
+export type { ImageCategory }
 
 export function parseImageCategory(value: string | undefined): ImageCategory {
   if (!value) return "unknown"

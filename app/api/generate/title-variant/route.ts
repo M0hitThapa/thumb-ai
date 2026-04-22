@@ -9,11 +9,13 @@ export const maxDuration = 30
 
 const TEXT_MODEL = "gemini-3.1-flash-lite-preview"
 
-const Schema = z.object({
+const bodySchema = z.object({
   title: z.string().min(3).max(500),
 })
 
+
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
 function checkRateLimit(userId: string): boolean {
   const now = Date.now()
   const entry = rateLimitMap.get(userId)
@@ -26,60 +28,56 @@ function checkRateLimit(userId: string): boolean {
   return true
 }
 
-export async function POST(req: NextRequest) {
+const PROMPT = (title: string) => `You help YouTube creators refine titles.
+The creator wrote: "${title}"
+
+Return ONLY a JSON array of exactly 5 alternative titles. No markdown, no explanation.
+Rules:
+- Reuse most of the same words — light edits only (word order, emphasis, one number or "?" if it fits)
+- Each title under 75 characters
+- Same subject matter, no new angles
+
+Example: ["...", "...", "...", "...", "..."]`
+
+function parseVariants(raw: string): string[] {
+  const cleaned = raw.replace(/```(?:json)?\n?/g, "").trim()
+
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    if (!session?.user) return apiError("Unauthorized", 401)
-    if (!checkRateLimit(session.user.id))
-      return apiError("Rate limit exceeded.", 429)
+    const parsed = JSON.parse(cleaned)
+    if (Array.isArray(parsed)) {
+      return (parsed as unknown[])
+        .filter((v): v is string => typeof v === "string")
+        .slice(0, 5)
+    }
+  } catch {}
 
-    const parsed = Schema.safeParse(await req.json())
-    if (!parsed.success) return validationError(parsed.error)
 
-    const { title } = parsed.data
+  return (cleaned.match(/"([^"]+)"/g) ?? [])
+    .map((s) => s.slice(1, -1))
+    .filter(Boolean)
+    .slice(0, 5)
+}
 
-    const ai = getVertexGenAI()
+export async function POST(req: NextRequest) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return apiError("Unauthorized", 401)
+  if (!checkRateLimit(session.user.id))
+    return apiError("Rate limit exceeded.", 429)
 
-    const prompt = `You help YouTube creators refine titles. The creator wrote:
+  const parsed = bodySchema.safeParse(await req.json())
+  if (!parsed.success) return validationError(parsed.error)
 
-"${title}"
-
-Generate exactly **5 alternative title strings** that:
-1. Reuse **most of the same words** as the creator's line — light edits only (word order, emphasis, add one number or question mark if it fits). Do NOT change the core story or invent a new angle.
-2. Each variant under **75 characters** (reasonable for YouTube).
-3. Honest — same subject matter as the original.
-
-Return ONLY valid JSON: an array of 5 strings. No markdown.
-Example format: ["...", "...", "...", "...", "..."]`
-
-    const response = await ai.models.generateContent({
+  try {
+    const response = await getVertexGenAI().models.generateContent({
       model: TEXT_MODEL,
-      contents: prompt,
+      contents: PROMPT(parsed.data.title),
     })
 
     const raw = response.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
+    const variants = parseVariants(raw)
 
-    const jsonStr = raw.replace(/```(?:json)?\n?/g, "").trim()
-
-    let variants: string[]
-    try {
-      const parsed = JSON.parse(jsonStr) as unknown
-      if (!Array.isArray(parsed)) throw new Error("not array")
-      variants = (parsed as unknown[])
-        .filter((v): v is string => typeof v === "string")
-        .slice(0, 5)
-      if (variants.length === 0) throw new Error("empty")
-    } catch {
-      const matches = jsonStr.match(/"([^"]+)"/g)
-      variants = (matches ?? [])
-        .map((s: string) => s.replace(/^"|"$/g, ""))
-        .filter(Boolean)
-        .slice(0, 5)
-    }
-
-    if (variants.length === 0) {
+    if (variants.length === 0)
       return apiError("Could not generate title variants. Please try again.")
-    }
 
     return NextResponse.json({ variants })
   } catch (err) {
