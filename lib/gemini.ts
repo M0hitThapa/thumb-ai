@@ -506,7 +506,10 @@ export async function generateThumbnailImages(req: GenerateImagesRequest): Promi
       .join("\n")
 
     const contents = req.images.length > 0
-      ? [{ role: "user" as const, parts: [{ text: fullPrompt }, ...imageParts] }]
+      ? [
+          { role: "user" as const, parts: imageParts },
+          { role: "user" as const, parts: [{ text: fullPrompt }] },
+        ]
       : fullPrompt
 
     let variant: GeneratedVariant | null = null
