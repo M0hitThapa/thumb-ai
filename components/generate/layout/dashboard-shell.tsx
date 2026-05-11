@@ -1,43 +1,25 @@
 "use client"
 
 import * as React from "react"
-import type { SubmitEvent } from "react"
 import {
+  Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/theme-provider"
 import Link from "next/link"
 import { AppLogo } from "@/components/icons/logos"
-import { TitleSection } from "../sidebar-section/title-section"
-import { IconLoader2 } from "@tabler/icons-react"
-import { ColorSection } from "../sidebar-section/color-section"
 import { cn } from "@/lib/utils"
+import { IconBookmarks } from "@tabler/icons-react"
 
-type DashboardShellProps = React.ComponentProps<"aside"> & {
-  onSubmitGenerate: (e: SubmitEvent<HTMLFormElement>) => void
-  isGenerating: boolean
-}
+type DashboardShellProps = React.ComponentProps<"aside">
 
-export function DashboardShell({
-  onSubmitGenerate,
-  isGenerating,
-  className,
-  ...props
-}: DashboardShellProps) {
+export function DashboardShell({ className, ...props }: DashboardShellProps) {
   return (
-    <aside
-      className={cn(
-        "flex min-h-0 w-full min-w-0 flex-col bg-sidebar text-sidebar-foreground md:h-full md:w-80 md:shrink-0 md:border-r md:border-sidebar-border lg:w-96 xl:w-[32rem]",
-        className
-      )}
-      {...props}
-    >
+    <Sidebar className={cn("max-md:hidden", className)} {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between border-b border-sidebar-border py-[3.5px] pr-3 hover:bg-sidebar-accent">
@@ -60,31 +42,15 @@ export function DashboardShell({
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="space-y-2 px-2 pt-2">
-        <TitleSection />
-        <ColorSection />
+      <SidebarContent className="flex-1 space-y-2 px-2 pt-2">
+        <div className="flex h-full flex-col items-center justify-center text-center opacity-40">
+          <IconBookmarks className="mb-3 size-10 text-muted-foreground" />
+          <p className="text-sm font-medium text-muted-foreground">
+            Saved Thumbnails
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/70">Coming soon</p>
+        </div>
       </SidebarContent>
-
-      <SidebarFooter>
-        <form className="p-1" onSubmit={onSubmitGenerate}>
-          <Button
-            type="submit"
-            className="w-full bg-sidebar-primary text-sidebar-primary-foreground shadow-none"
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <>
-                <IconLoader2 className="mr-2 size-4 animate-spin" />
-                Generating…
-              </>
-            ) : (
-              "Generate Thumbnail"
-            )}
-          </Button>
-        </form>
-      </SidebarFooter>
-    </aside>
+    </Sidebar>
   )
 }
-
-

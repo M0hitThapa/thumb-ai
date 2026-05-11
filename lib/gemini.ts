@@ -32,49 +32,50 @@ const VARIATION_CONFIGS: readonly VariationConfig[] = [
   },
 ] as const
 
-
-function buildVariantTypographyGuidance(strategy: GeneratedVariant["strategy"]): string {
+function buildVariantTypographyGuidance(
+  strategy: GeneratedVariant["strategy"]
+): string {
   const common =
-    "Apply this ONLY to the on-image title text (same allowed words). Do NOT default to generic 'white letters + thick black outline + Impact' unless this block explicitly fits that vibe."
+    "Apply ONLY to the chosen thumbnail text (max 4 words). Do NOT default to generic 'white letters + thick black outline + Impact' — vary the treatment per variant."
 
   if (strategy === "dramatic") {
     return `
-## TYPOGRAPHY & TITLE STYLE — THIS VARIANT: DRAMATIC
+## TYPOGRAPHY — THIS VARIANT: DRAMATIC
 
 ${common}
 
-- **High-energy display type** — condensed cinematic sans, ultra-bold wedge/gothic, or trailer-style caps with attitude. NOT the same font personality as a generic gaming thumbnail every time.
-- **Color & materials** — Try: hot yellow + deep red, electric cyan + magenta rim, chrome/metallic gradient fills, neon outer glow, or fire/ice split on key words. Use 2–3 colors inside the letters that echo the scene lighting.
-- **Effects** — Layered glow, subtle 3D extrusion, inner shadow, or sharp double-outline (inner light + outer dark). Avoid flat plain white fills unless the scene is very dark and it is the only readable choice.
-- **Hierarchy** — You may make ONE important word from the title clearly larger or more luminous than the rest (still only words from the title).
-- **Casing** — ALL CAPS or sharp Title Case; pick whichever feels more cinematic for this title.
+- **High-energy display type** — condensed cinematic sans, ultra-bold wedge/gothic, or trailer-style caps.
+- **Color** — hot yellow + deep red, electric cyan + magenta rim, chrome/metallic gradient, neon glow, or fire/ice split. 1 main color + 1 accent max.
+- **Effects** — Layered glow, subtle 3D extrusion, or sharp double-outline.
+- **Hierarchy** — Make the most important word clearly larger/brighter.
+- **Casing** — ALL CAPS for maximum energy.
 `.trim()
   }
 
   if (strategy === "clean") {
     return `
-## TYPOGRAPHY & TITLE STYLE — THIS VARIANT: CLEAN / PREMIUM
+## TYPOGRAPHY — THIS VARIANT: CLEAN / PREMIUM
 
 ${common}
 
-- **Refined sans or neo-grotesk** — modern geometric, editorial magazine, or Apple-keynote calm. Crisp curves, confident spacing — a different typographic personality than "dramatic" or "artistic" variants.
-- **Color** — Prefer text color pulled from the thumbnail's palette (e.g. cream on navy, soft black on sand, deep brand green on off-white). White-only text is allowed but should feel intentional, not default.
-- **Separation from background** — Use a tight soft plate, very subtle drop shadow, or thin high-contrast outline — NOT the same heavy cartoon stroke as other variants. Keep it premium and restrained.
-- **Casing** — Title Case or refined sentence case often reads more "premium" than shouting ALL CAPS; choose what fits the title length.
-- **Lockup** — Tighter, elegant line breaks; optional slight letter-spacing on short titles for authority.
+- **Refined sans or neo-grotesk** — modern geometric, editorial magazine calm.
+- **Color** — Text color from palette (cream on navy, soft black on sand). White allowed but intentional.
+- **Separation** — Subtle drop shadow or thin outline. No heavy cartoon strokes. Premium and restrained.
+- **Casing** — Title Case for premium feel.
+- **Lockup** — Slight letter-spacing for authority.
 `.trim()
   }
 
   return `
-## TYPOGRAPHY & TITLE STYLE — THIS VARIANT: ARTISTIC / BOLD
+## TYPOGRAPHY — THIS VARIANT: ARTISTIC / BOLD
 
 ${common}
 
-- **Expressive letterforms** — hand-painted brush energy, poster ink, sticker die-cut, comic halftone inside letters, or masked type inside a shape — still fully readable at small preview size.
-- **Color play** — duotone fills, split-color letters, gradient mesh on type, or unexpected outline color (e.g. coral halo on teal letters). Harmonize with the thumbnail but avoid repeating the same white/black formula.
-- **Layout** — curved text on a gentle arc, stacked staggered lines, or one word on a slight angle — only if it stays readable and words stay complete.
-- **Texture** — light grain, speckle, or print texture on letters is OK if it does not hurt legibility.
-- **Casing** — mixed case or selective emphasis on one phrase from the title is allowed if it adds character (words still from the title only).
+- **Expressive letterforms** — brush energy, poster ink, sticker die-cut, or comic halftone inside letters.
+- **Color play** — duotone fills, split-color letters, gradient mesh, or unexpected outline color.
+- **Layout** — curved arc, stacked stagger, or one word angled — must stay readable.
+- **Texture** — light grain or speckle OK if legible.
+- **Casing** — mixed case or selective emphasis adds character.
 `.trim()
 }
 
@@ -82,35 +83,63 @@ function buildOverlayTextGuidance(videoTitle: string): string {
   const t = videoTitle.trim()
   if (!t) return ""
 
-  const wordCount = t.split(/\s+/).length
-
   return `
-## ON-IMAGE TEXT — CRITICAL (READ EVERY RULE)
+## ON-IMAGE TEXT — STRATEGIC TEXT RULES (READ EVERY RULE)
 
-**Creator's exact title:**
+**Creator's video title / prompt:**
 "${t}"
 
-### TEXT CONTENT RULES:
-1. **Use the FULL title as-is** — The text on the thumbnail should be the user's title or a very close version of it. Keep ALL key words. You may ONLY shorten if the title is longer than ~8 words, and even then keep the core message intact.
-${wordCount <= 6
-      ? `2. **This title is short enough — use it EXACTLY as written.** Do NOT drop or change any words. Render: "${t}"`
-      : `2. **This title has ${wordCount} words — you may trim filler words** (a, the, my, to, and, in, for, of) but keep every noun, verb, number, and adjective. The trimmed version MUST still read as the same claim/story.`
-    }
-3. **NEVER invent new words** — Do NOT add "SHOCKING", "WOW", "INSANE", or ANY word not in the original title above.
-4. **NEVER chop words** — Every word must be COMPLETE. No partial words, no letters cut off at edges. If a word doesn't fit, adjust size, line break, or letter-spacing — do NOT truncate the word.
-5. **Numbers and symbols are sacred** — Keep them exactly ($200k, 10X, 24H, etc.).
+### CORE PRINCIPLE:
+If the thumbnail works without text, text is OPTIONAL. If text is needed, it must amplify curiosity in ≤ 4 words.
 
-### READABILITY (non-negotiable — creativity must still pass these):
-6. **Fully visible** — No letter or word clipped by the image edge. Leave at least 5% padding from every edge.
-7. **1–2 lines** — Long titles: break at natural phrase boundaries.
-8. **Mobile preview** — Must stay readable at ~120×68px: bold enough weight, enough contrast vs background (outline, glow, scrim, or solid plate behind type are all OK).
-9. **Minimum impact size** — Title block should feel LARGE (roughly ≥15% of frame height for the main line); never timid tiny captions.
-10. **Creativity encouraged** — Font personality, fill color, outline/glow color, casing, and effects should follow the **TYPOGRAPHY & TITLE STYLE** section for THIS variant. Rotate away from the same font+color+effect on every image.
+### TEXT SELECTION PROCESS:
+1. **Extract intent** from the title — detect the topic, emotion (shock, curiosity, urgency, fear, excitement), and outcome (result, transformation, mistake, secret).
+2. **Generate the BEST short text** using these patterns:
+   - Curiosity Gap: "No One Tells You"
+   - Shock: "This Changed Everything"
+   - Contrarian: "Stop Doing This"
+   - Result: "10x Better" / "$0 → $10K"
+   - Question: "Why Yours Fail?"
+   - Urgency: "Before It's Too Late"
+3. **HARD FILTERS — reject text if:**
+   - ❌ More than 4 words
+   - ❌ Contains filler words ("the", "a", "very", "really", etc.)
+   - ❌ Repeats the title meaning exactly (text should COMPLEMENT, not duplicate)
+   - ❌ Hard to read at small size
+   - ❌ No emotional trigger
+4. **Score the best option** by: curiosity (creates open loop?), clarity (instantly understandable?), emotional impact (strong feeling?), brevity (≤3 words = best).
+5. **Numbers and symbols are powerful** — Keep them exactly ($200k, 10X, 24H). Numbers make great standalone text.
+
+### WHEN TO SKIP TEXT ENTIRELY:
+- Face expression is very strong and tells the story
+- Visual already tells the story clearly (before/after, recognizable object)
+- The image is powerful enough on its own
+→ In these cases, use NO text. A clean thumbnail with zero text can outperform one with text.
+
+### NICHE AWARENESS:
+- Finance → "$0 → $10K", "LOST IT ALL"
+- Fitness → "Lost 20kg", "NEVER AGAIN"
+- Tech/Coding → "Stop This", "10x Faster"
+- Travel → "$47/Night", "SECRET SPOT"
+- Gaming → "WORLD FIRST", "THEY QUIT"
+
+### TEXT DESIGN (non-negotiable):
+- **Max 4 words** (prefer 1–3)
+- **Bold, thick font** — no thin fonts ever
+- **High contrast** with background (yellow on dark, white + stroke, red for urgency)
+- **EVERY word COMPLETE** — no partial words, no letters cut off
+- **Readable at 120×68px** (mobile preview size)
+- **Text block ≥15% of frame height** — big, punchy, impossible to miss
 
 ### TEXT PLACEMENT:
-11. **Breathing room** — Place in the clearest negative space (corners/edges typical).
-12. **NEVER over a face** — Text must not overlap or obscure any person's face.
-13. **Contrast** — If the background is busy, add a gradient scrim, soft panel, or glow so type stays legible without defaulting to identical styling every time.
+- **NEVER over a face** — text must not overlap any person's face
+- Place in clearest negative space (left/right side, top/bottom safe zones)
+- If background is busy, add gradient scrim or glow behind text
+- Leave 5%+ padding from every edge
+
+### FACE DETECTION AWARENESS:
+- If a person/face is present → use SHORTER text (1–2 words max) or skip text
+- If no face → slightly more text is OK (up to 4 words)
 `.trim()
 }
 
@@ -243,7 +272,8 @@ function buildImageContext(images: ClassifiedImage[]): string {
 }
 
 function buildAiPersonBlock(req: GenerateImagesRequest): string {
-  if (!req.useAiPerson || req.images.some((img) => img.category === "person")) return ""
+  if (!req.useAiPerson || req.images.some((img) => img.category === "person"))
+    return ""
 
   return `
 ## AI-GENERATED PERSON (user opted-in)
@@ -278,7 +308,8 @@ Do not invent a stock-photo-style person or influencer face — there must be no
 function buildScenarioBlock(req: GenerateImagesRequest): string {
   const categories = new Set(req.images.map((img) => img.category))
   const has = (c: ImageCategory) => categories.has(c)
-  const noUploadedImages = req.images.filter((i) => i.category !== "reference_style").length === 0
+  const noUploadedImages =
+    req.images.filter((i) => i.category !== "reference_style").length === 0
   const personCount = req.images.filter((i) => i.category === "person").length
 
   const lines: string[] = ["## SCENARIO ANALYSIS"]
@@ -303,7 +334,10 @@ function buildScenarioBlock(req: GenerateImagesRequest): string {
     )
   }
 
-  if (has("unknown") || (has("props") && !has("person") && !has("background"))) {
+  if (
+    has("unknown") ||
+    (has("props") && !has("person") && !has("background"))
+  ) {
     lines.push(
       "",
       "SMART IMAGE USAGE:",
@@ -358,14 +392,14 @@ ${buildVariantTypographyGuidance(strategy)}
 
 You are creating a PREMIUM YouTube thumbnail that would look at home on a channel with 10M+ subscribers. Every design choice must be intentional and polished.
 
-### TEXT ON THUMBNAIL (summary of rules above):
-- Render the user's title (or a faithful shortened version) — see the detailed text rules above.
-- EVERY word must be COMPLETE — no clipping, no truncation, no partial words.
-- **Typographic variety** — Follow the TYPOGRAPHY & TITLE STYLE block for this variant (font personality, colors, effects, casing). Do NOT reuse the same title treatment across variants.
-- Strong contrast vs background (outline, glow, scrim, or plate — your choice to match the variant).
-- Place in a corner/edge zone with breathing room — NEVER over a face.
-- If text is long, split into 2 lines with natural phrase breaks.
-- Add a subtle gradient or shadow behind text if the background is busy.
+### TEXT ON THUMBNAIL:
+- Use ≤4 words of HIGH-IMPACT text (NOT the full title — a punchy trigger phrase).
+- Text should create curiosity, emotion, or tension — NOT repeat the video title.
+- If the visual is strong enough alone, SKIP text entirely.
+- EVERY word must be COMPLETE — no clipping, no truncation.
+- **Bold, thick font** with high contrast. 1 main color + 1 accent max.
+- Place in negative space — NEVER over a face.
+- Follow the TYPOGRAPHY block for this variant's style.
 
 ### COMPOSITION & LAYOUT:
 - **ONE clear focal point** — the eye must know exactly where to go within 0.5 seconds.
@@ -385,10 +419,11 @@ You are creating a PREMIUM YouTube thumbnail that would look at home on a channe
 ### LIGHTING & COLOR GRADING:
 - **Cinematic lighting** — use dramatic rim/edge lighting to separate subject from background.
 - **Color grading** — apply professional color grading (teal & orange, warm golden, cool blue, etc.) for a polished film look.
-- ${req.colorTheme
+- ${
+    req.colorTheme
       ? `Use exactly this color direction: ${req.colorTheme} (primary, secondary, accent)`
       : "AUTO — choose a bold, high-contrast color palette that fits the video title's mood. Prefer saturated, vibrant tones (not muted/pastel)."
-    }
+  }
 - **Maximum 3 dominant colors** — a focused palette reads better at small sizes.
 - **Bright, saturated colors** beat muted tones for CTR (unless the title demands a moody/dark aesthetic).
 - **Background should complement, not compete** — slightly desaturate or blur the background if the subject needs to stand out more.
@@ -411,15 +446,15 @@ You are creating a PREMIUM YouTube thumbnail that would look at home on a channe
 **Format:** 16:9 landscape YouTube thumbnail (1280×720 equivalent)`.trim()
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 function buildImageParts(images: ClassifiedImage[]): Part[] {
   return images.map((img) => ({
     inlineData: { mimeType: img.mimeType, data: img.base64 },
   }))
 }
 
-function extractFromParts(parts: Part[]): { imageBase64: string; description: string } | null {
+function extractFromParts(
+  parts: Part[]
+): { imageBase64: string; description: string } | null {
   let imageBase64: string | null = null
   let description = ""
   for (const part of parts) {
@@ -452,9 +487,9 @@ function isRetryableError(err: unknown): boolean {
   )
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
-export async function generateThumbnailImages(req: GenerateImagesRequest): Promise<GeneratedVariant[]> {
+export async function generateThumbnailImages(
+  req: GenerateImagesRequest
+): Promise<GeneratedVariant[]> {
   const ai = getVertexGenAI()
   const imageParts = buildImageParts(req.images)
   const imageCtx = buildImageContext(req.images)
@@ -469,16 +504,18 @@ export async function generateThumbnailImages(req: GenerateImagesRequest): Promi
     const coreRules = buildCoreRules(req, config.strategy)
 
     const fullPrompt = [
-      `You are a world-class thumbnail designer who creates viral, click-worthy YouTube thumbnails used by creators with millions of subscribers.`,
+      `You are a world-class thumbnail designer AND text strategist who creates viral, click-worthy YouTube thumbnails used by creators with millions of subscribers.`,
       "",
       `Create a PREMIUM, high-CTR YouTube thumbnail for this video.`,
       `Video title: "${req.title}"`,
       "",
-      `THUMBNAIL TEXT RULE (non-negotiable):`,
-      `- The text on the thumbnail MUST be the user's title or a faithful shortened version of it.`,
-      `- Use ONLY words from the title above. Do NOT invent new words, hooks, or clickbait terms.`,
+      `THUMBNAIL TEXT STRATEGY (critical):`,
+      `- You are a thumbnail TEXT STRATEGIST. Do NOT just paste the video title onto the image.`,
+      `- First decide: does this thumbnail NEED text? If the visual is powerful enough, skip text entirely.`,
+      `- If text is needed: generate a SHORT, HIGH-IMPACT phrase (max 4 words, prefer 1-3).`,
+      `- The text must create CURIOSITY, EMOTION, or TENSION — not repeat the title.`,
+      `- Think: "$0 → $10K", "NEVER AGAIN", "They Lied", "10x Faster", "Why?", "STOP THIS"`,
       `- EVERY word must be FULLY rendered — no clipping, no truncation, no partial words.`,
-      `- If the title is 6 words or fewer, use it EXACTLY as written.`,
       "",
       buildScenarioBlock(req),
       "",
@@ -488,29 +525,32 @@ export async function generateThumbnailImages(req: GenerateImagesRequest): Promi
       "",
       imageCtx,
       "",
-      req.prompt?.trim() ? `CREATOR INSTRUCTIONS (follow closely): "${req.prompt.trim()}"` : "",
+      req.prompt?.trim()
+        ? `CREATOR INSTRUCTIONS (follow closely): "${req.prompt.trim()}"`
+        : "",
       "",
       coreRules,
       "",
       `VARIATION STYLE: ${config.direction}`,
-      "Make this variant visually distinct: different layout, lighting, color grading, AND a clearly different **title typography** (font personality, colors, casing, effects) from the other variants — while the words on the thumbnail still come only from the user's title.",
+      "Make this variant visually distinct: different layout, lighting, color grading, AND a clearly different **text treatment** (different text phrase, font, colors, effects) from the other variants.",
       "",
       `FINAL CHECKLIST before generating:`,
-      `1. Is the text on the thumbnail the user's actual title (or faithful short version)? ✓`,
+      `1. Is the text ≤4 words and high-impact (NOT just the full title pasted on)? ✓`,
       `2. Is every word COMPLETE and fully visible (no clipping)? ✓`,
-      `3. Is the title readable at mobile preview size — with a fresh typographic treatment (not copy-pasted styling)? ✓`,
+      `3. Is the text readable at mobile preview size with bold, thick typography? ✓`,
       `4. Does the thumbnail look like it belongs on a 10M+ subscriber channel? ✓`,
       `5. Would YOU click on this thumbnail? ✓`,
     ]
       .filter(Boolean)
       .join("\n")
 
-    const contents = req.images.length > 0
-      ? [
-          { role: "user" as const, parts: imageParts },
-          { role: "user" as const, parts: [{ text: fullPrompt }] },
-        ]
-      : fullPrompt
+    const contents =
+      req.images.length > 0
+        ? [
+            { role: "user" as const, parts: imageParts },
+            { role: "user" as const, parts: [{ text: fullPrompt }] },
+          ]
+        : fullPrompt
 
     let variant: GeneratedVariant | null = null
 
@@ -518,7 +558,9 @@ export async function generateThumbnailImages(req: GenerateImagesRequest): Promi
       try {
         const response = await ai.models.generateContent({
           model: IMAGE_MODEL,
-          contents: contents as Parameters<typeof ai.models.generateContent>[0]["contents"],
+          contents: contents as Parameters<
+            typeof ai.models.generateContent
+          >[0]["contents"],
           config: {
             responseModalities: ["TEXT", "IMAGE"],
             imageConfig: { aspectRatio: "16:9", imageSize: "1K" },
@@ -537,7 +579,9 @@ export async function generateThumbnailImages(req: GenerateImagesRequest): Promi
           break
         }
         const delay = Math.round(1800 * 2 ** attempt + Math.random() * 600)
-        console.warn(`[Gemini] Variant "${config.strategy}" retrying in ${delay}ms (${attempt + 2}/${MAX_ATTEMPTS})`)
+        console.warn(
+          `[Gemini] Variant "${config.strategy}" retrying in ${delay}ms (${attempt + 2}/${MAX_ATTEMPTS})`
+        )
         await sleep(delay)
       }
     }
@@ -547,4 +591,104 @@ export async function generateThumbnailImages(req: GenerateImagesRequest): Promi
   }
 
   return results
+}
+
+export async function* generateThumbnailImageStream(
+  req: GenerateImagesRequest
+): AsyncGenerator<GeneratedVariant> {
+  const ai = getVertexGenAI()
+  const imageParts = buildImageParts(req.images)
+  const imageCtx = buildImageContext(req.images)
+  const count = Math.min(Math.max(1, req.variantCount), 3) as 1 | 2 | 3
+  const configs = VARIATION_CONFIGS.slice(0, count)
+
+  const MAX_ATTEMPTS = 4
+
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i]!
+    const coreRules = buildCoreRules(req, config.strategy)
+
+    const fullPrompt = [
+      `You are a world-class thumbnail designer AND text strategist who creates viral, click-worthy YouTube thumbnails used by creators with millions of subscribers.`,
+      "",
+      `Create a PREMIUM, high-CTR YouTube thumbnail for this video.`,
+      `Video title: "${req.title}"`,
+      "",
+      `THUMBNAIL TEXT STRATEGY (critical):`,
+      `- You are a thumbnail TEXT STRATEGIST. Do NOT just paste the video title onto the image.`,
+      `- First decide: does this thumbnail NEED text? If the visual is powerful enough, skip text entirely.`,
+      `- If text is needed: generate a SHORT, HIGH-IMPACT phrase (max 4 words, prefer 1-3).`,
+      `- The text must create CURIOSITY, EMOTION, or TENSION — not repeat the title.`,
+      `- Think: "$0 → $10K", "NEVER AGAIN", "They Lied", "10x Faster", "Why?", "STOP THIS"`,
+      `- EVERY word must be FULLY rendered — no clipping, no truncation, no partial words.`,
+      "",
+      buildScenarioBlock(req),
+      "",
+      buildAiPersonBlock(req),
+      "",
+      buildNoPersonSubjectBlock(req),
+      "",
+      imageCtx,
+      "",
+      req.prompt?.trim()
+        ? `CREATOR INSTRUCTIONS (follow closely): "${req.prompt.trim()}"`
+        : "",
+      "",
+      coreRules,
+      "",
+      `VARIATION STYLE: ${config.direction}`,
+      "Make this variant visually distinct: different layout, lighting, color grading, AND a clearly different **text treatment** (different text phrase, font, colors, effects) from the other variants.",
+      "",
+      `FINAL CHECKLIST before generating:`,
+      `1. Is the text ≤4 words and high-impact (NOT just the full title pasted on)? ✓`,
+      `2. Is every word COMPLETE and fully visible (no clipping)? ✓`,
+      `3. Is the text readable at mobile preview size with bold, thick typography? ✓`,
+      `4. Does the thumbnail look like it belongs on a 10M+ subscriber channel? ✓`,
+      `5. Would YOU click on this thumbnail? ✓`,
+    ]
+      .filter(Boolean)
+      .join("\n")
+
+    const contents =
+      req.images.length > 0
+        ? [
+            { role: "user" as const, parts: imageParts },
+            { role: "user" as const, parts: [{ text: fullPrompt }] },
+          ]
+        : fullPrompt
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model: IMAGE_MODEL,
+          contents: contents as Parameters<
+            typeof ai.models.generateContent
+          >[0]["contents"],
+          config: {
+            responseModalities: ["TEXT", "IMAGE"],
+            imageConfig: { aspectRatio: "16:9", imageSize: "1K" },
+          },
+        })
+
+        const parts = response.candidates?.[0]?.content?.parts ?? []
+        const extracted = extractFromParts(parts)
+        if (extracted) {
+          yield { ...extracted, strategy: config.strategy }
+        }
+        break
+      } catch (err) {
+        if (!isRetryableError(err) || attempt === MAX_ATTEMPTS - 1) {
+          console.error(`[Gemini] Variant "${config.strategy}" failed:`, err)
+          break
+        }
+        const delay = Math.round(1800 * 2 ** attempt + Math.random() * 600)
+        console.warn(
+          `[Gemini] Variant "${config.strategy}" retrying in ${delay}ms (${attempt + 2}/${MAX_ATTEMPTS})`
+        )
+        await sleep(delay)
+      }
+    }
+
+    if (i < configs.length - 1) await sleep(450)
+  }
 }

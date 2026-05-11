@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-linear-to-b from-cyan-500 to-cyan-600 text-white  ",
+        default: "bg-linear-to-b from-red-500 to-red-600 text-white",
         outline:
           "border-border bg-input/30 hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:

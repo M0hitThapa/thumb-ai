@@ -1,8 +1,8 @@
 import { apiError, validationError } from "@/lib/api-error"
 import { auth } from "@/lib/auth"
-import { generateThumbnailImages } from "@/lib/gemini"
+import { generateThumbnailImageStream } from "@/lib/gemini"
 import { headers } from "next/headers"
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { z } from "zod"
 
 export const maxDuration = 300
@@ -22,7 +22,7 @@ function checkRateLimit(userId: string): boolean {
 
 const ClassifiedImageSchema = z.object({
   base64: z.string().min(1, "Base64 is required"),
-  mimeType: z.string().min(1, "Mime type is required"), // Relaxed regex - accept any mime type
+  mimeType: z.string().min(1, "Mime type is required"),
   category: z
     .enum([
       "person",
@@ -72,34 +72,64 @@ export async function POST(request: NextRequest) {
       useAiPerson,
     } = parsed.data
 
-    let variants
-    try {
-      variants = await generateThumbnailImages({
-        title,
-        style,
-        colorTheme,
-        prompt,
-        variantCount,
-        images,
-        useAiPerson,
-      })
-    } catch (err) {
-      console.error("Image generation error:", err)
-      return apiError("Image generation failed. Please try again.")
-    }
+    const encoder = new TextEncoder()
 
-    if (!variants.length) {
-      return apiError("No images generated. Try a different prompt.")
-    }
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          let count = 0
+          for await (const variant of generateThumbnailImageStream({
+            title,
+            style,
+            colorTheme,
+            prompt,
+            variantCount,
+            images,
+            useAiPerson,
+          })) {
+            const json = JSON.stringify({
+              type: "variant",
+              variant: {
+                imageBase64: variant.imageBase64,
+                description: variant.description,
+                strategy: variant.strategy,
+                imageUrl: "",
+              },
+            })
+            controller.enqueue(encoder.encode(json + "\n"))
+            count++
+          }
 
-    const variantsForClient = variants.map((v) => ({
-      imageBase64: v.imageBase64,
-      description: v.description,
-      strategy: v.strategy,
-      imageUrl: "" as const,
-    }))
+          if (count === 0) {
+            const errorJson = JSON.stringify({
+              type: "error",
+              error: "No images generated. Try a different prompt.",
+            })
+            controller.enqueue(encoder.encode(errorJson + "\n"))
+          }
 
-    return NextResponse.json({ variants: variantsForClient })
+          const doneJson = JSON.stringify({ type: "done" })
+          controller.enqueue(encoder.encode(doneJson + "\n"))
+        } catch (err) {
+          console.error("Image generation stream error:", err)
+          const errorJson = JSON.stringify({
+            type: "error",
+            error: "Image generation failed. Please try again.",
+          })
+          controller.enqueue(encoder.encode(errorJson + "\n"))
+        } finally {
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "application/x-ndjson",
+        "Cache-Control": "no-cache",
+        "Transfer-Encoding": "chunked",
+      },
+    })
   } catch (err) {
     console.error("Image generation error:", err)
     return apiError("Image generation failed. Please try again.")

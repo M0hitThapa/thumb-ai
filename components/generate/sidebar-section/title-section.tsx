@@ -225,7 +225,7 @@ export function TitleSection() {
 
   return (
     <div className="space-y-2 px-1">
-      <Label className="text-md font-semibold text-neutral-600 dark:text-neutral-400">
+      <Label className="text-md font-semibold text-neutral-800 dark:text-neutral-200">
         Title <span className="text-red-500">*</span>
       </Label>
 
@@ -247,7 +247,6 @@ export function TitleSection() {
                 key={`${i}-${img.preview.slice(0, 20)}`}
                 className="group squircle pointer-events-auto relative size-14 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-muted dark:border-neutral-600"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={img.preview}
                   alt=""
