@@ -2,9 +2,81 @@
 
 import type { SubmitEvent } from "react"
 import { create } from "zustand"
-import { useTitleAndUploadsStore } from "@/components/generate/sidebar-section/title-section"
-import type { GeneratedVariant } from "@/lib/types"
+import type { GeneratedVariant, UploadedImage } from "@/lib/types"
+import { DEFAULT_COLOR_PALETTE_NAME, IMAGE_COLOR_PALETTES } from "@/lib/thumbnail-ui-constants"
 import { toast } from "sonner"
+
+interface ThumbnailColorState {
+  colorMode: "auto" | "palette"
+  selectedPalette: string
+  setColorMode: (v: "auto" | "palette") => void
+  setSelectedPalette: (v: string) => void
+}
+
+export const useThumbnailColorStore = create<ThumbnailColorState>()((set) => ({
+  colorMode: "auto",
+  selectedPalette: DEFAULT_COLOR_PALETTE_NAME,
+  setColorMode: (colorMode) => set({ colorMode }),
+  setSelectedPalette: (selectedPalette) =>
+    set({ selectedPalette, colorMode: "palette" }),
+}))
+
+export function useGeneratorColorThemeStr(): string {
+  const colorMode = useThumbnailColorStore((s) => s.colorMode)
+  const selectedPalette = useThumbnailColorStore((s) => s.selectedPalette)
+  const palette =
+    IMAGE_COLOR_PALETTES.find((p) => p.name === selectedPalette) ??
+    IMAGE_COLOR_PALETTES[0]!
+  return colorMode === "auto"
+    ? ""
+    : `3-color palette: primary ${palette.colors[0]}, secondary ${palette.colors[1]}, accent ${palette.colors[2]}`
+}
+
+interface TitleAndUploadsState {
+  title: string
+  uploadedImages: UploadedImage[]
+  useAiPerson: boolean
+  setTitle: (v: string) => void
+  setUseAiPerson: (v: boolean) => void
+  hasUploadedPersonImage: () => boolean
+  addImages: (images: UploadedImage[]) => number
+  removeImage: (index: number) => void
+  updateImageClassification: (
+    index: number,
+    data: Partial<UploadedImage>
+  ) => void
+}
+
+export const useTitleAndUploadsStore = create<TitleAndUploadsState>()(
+  (set, get) => ({
+    title: "",
+    uploadedImages: [],
+    useAiPerson: false,
+
+    setTitle: (title) => set({ title }),
+    setUseAiPerson: (useAiPerson) => set({ useAiPerson }),
+    hasUploadedPersonImage: () =>
+      get().uploadedImages.some((img) => img.category === "person"),
+
+    addImages: (images) => {
+      const start = get().uploadedImages.length
+      set((s) => ({ uploadedImages: [...s.uploadedImages, ...images] }))
+      return start
+    },
+
+    removeImage: (index) =>
+      set((s) => ({
+        uploadedImages: s.uploadedImages.filter((_, i) => i !== index),
+      })),
+
+    updateImageClassification: (index, data) =>
+      set((s) => ({
+        uploadedImages: s.uploadedImages.map((img, i) =>
+          i === index ? { ...img, ...data } : img
+        ),
+      })),
+  })
+)
 
 const GENERATE_FETCH_TIMEOUT_MS = 315_000
 

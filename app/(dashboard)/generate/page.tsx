@@ -4,13 +4,17 @@ import type { SubmitEvent } from "react"
 import { useCallback } from "react"
 import { DashboardShell } from "@/components/generate/layout/dashboard-shell"
 import { PromptBar } from "@/components/generate/prompt-bar"
-import { useThumbnailGenerate } from "@/hooks/use-thumbnail-generate"
+import { useGeneratorColorThemeStr, useThumbnailGenerate, useThumbnailGenerateResultsStore, useTitleAndUploadsStore } from "@/hooks/use-thumbnail-generate"
 import { STRATEGY_LABELS } from "@/lib/thumbnail-ui-constants"
-import { useTitleAndUploadsStore } from "@/components/generate/sidebar-section/title-section"
-import { useGeneratorColorThemeStr } from "@/components/generate/sidebar-section/color-section"
-import { useThumbnailGenerateResultsStore } from "@/hooks/use-thumbnail-generate"
 import type { GeneratedVariant } from "@/lib/types"
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -23,18 +27,6 @@ import {
 } from "@/components/ui/breadcrumb"
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-
-const PLACEHOLDER_IMAGES = [
-  { src: "/temp.png", alt: "Thumbnail placeholder 1" },
-  { src: "/temp.png", alt: "Thumbnail placeholder 2" },
-  { src: "/temp.png", alt: "Thumbnail placeholder 3" },
-  { src: "/temp.png", alt: "Thumbnail placeholder 4" },
-  { src: "/temp.png", alt: "Thumbnail placeholder 5" },
-  { src: "/thumb.png", alt: "Thumbnail placeholder 6" },
-  { src: "/temp.png", alt: "Thumbnail placeholder 7" },
-  { src: "/temp.png", alt: "Thumbnail placeholder 8" },
-  { src: "/temp.png", alt: "Thumbnail placeholder 9" },
-]
 
 function downloadVariant(variant: GeneratedVariant, index: number) {
   const link = document.createElement("a")
@@ -93,70 +85,35 @@ export default function Page() {
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <div className="flex flex-1 flex-col gap-4 p-4 pb-44">
             {showEmptyState && (
-              <div className="flex h-full w-full items-center justify-center overflow-hidden">
-                <div className="grid w-full grid-cols-2 gap-3 px-4 sm:grid-cols-3 sm:gap-4 sm:px-5">
-                  {PLACEHOLDER_IMAGES.map((img, i) => {
-                    const isHighlighted = i === 5
-                    const isHiddenOnMobile = i >= 6
-
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          isHiddenOnMobile ? "hidden sm:block" : "block",
-                          "relative"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "relative aspect-video overflow-hidden rounded-xl transition-all duration-300",
-                            isHighlighted
-                              ? "shadow-xl ring-2 ring-primary ring-offset-2 ring-offset-background"
-                              : "opacity-40 grayscale"
-                          )}
-                        >
-                          <Image
-                            src={img.src}
-                            alt={img.alt}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-
-                        {isHighlighted && (
-                          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-                            <span className="absolute size-16 animate-ping rounded-full bg-white/30" />
-
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="64"
-                              height="64"
-                              viewBox="0 0 24 24"
-                              fill="white"
-                              stroke="white"
-                              strokeWidth="0.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="relative animate-bounce drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
-                              style={{
-                                animationDuration: "1s",
-                                transform: "rotate(-30deg)",
-                              }}
-                            >
-                              <path
-                                stroke="none"
-                                d="M0 0h24v24H0z"
-                                fill="none"
-                              />
-                              <path d="M14.185 13.14l5.644 -2.202c1.625 -.634 1.538 -2.962 -.13 -3.473l-14.319 -4.382c-1.41 -.431 -2.73 .888 -2.298 2.298l4.382 14.318c.51 1.668 2.84 1.755 3.473 .13l2.202 -5.644a1.84 1.84 0 0 1 1.045 -1.045" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
+              <Empty>
+                <EmptyMedia>
+                  <div className="relative flex items-center justify-center">
+                    <span className="absolute size-16 animate-ping rounded-full bg-primary/20" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="relative text-muted-foreground"
+                      style={{ transform: "rotate(-30deg)" }}
+                    >
+                      <path d="M14.185 13.14l5.644 -2.202c1.625 -.634 1.538 -2.962 -.13 -3.473l-14.319 -4.382c-1.41 -.431 -2.73 .888 -2.298 2.298l4.382 14.318c.51 1.668 2.84 1.755 3.473 .13l2.202 -5.644a1.84 1.84 0 0 1 1.045 -1.045" />
+                    </svg>
+                  </div>
+                </EmptyMedia>
+                <EmptyHeader>
+                  <EmptyTitle>No thumbnails yet</EmptyTitle>
+                  <EmptyDescription>
+                    Enter a title above and generate your first thumbnail to get
+                    started.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
 
             {!showEmptyState && (

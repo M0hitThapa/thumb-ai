@@ -19,8 +19,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { useTitleAndUploadsStore } from "@/components/generate/sidebar-section/title-section"
-import { useThumbnailColorStore } from "@/components/generate/sidebar-section/color-section"
+import {
+  useTitleAndUploadsStore,
+  useThumbnailColorStore,
+} from "@/hooks/use-thumbnail-generate"
 import { IMAGE_COLOR_PALETTES } from "@/lib/thumbnail-ui-constants"
 import { CATEGORY_LABELS } from "@/lib/category-labels"
 import {
@@ -195,7 +197,7 @@ export function PromptBar({ isGenerating, onGenerate }: PromptBarProps) {
       )}
 
       <NoiseBackground
-        containerClassName="w-full squircle"
+        containerClassName="w-full squircle shadow-[0px_0px_20px_3px_#d4d4d4] dark:shadow-[0px_0px_20px_3px_#0a0a0a] "
         gradientColors={[
           "rgb(255, 41, 0)",
           "rgb(100, 150, 255)",
@@ -265,15 +267,19 @@ export function PromptBar({ isGenerating, onGenerate }: PromptBarProps) {
                 <TooltipContent side="top">Color theme</TooltipContent>
               </Tooltip>
 
-              <DropdownMenuContent side="top" align="start" className="w-56">
-                <DropdownMenuLabel className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+              <DropdownMenuContent
+                side="top"
+                align="start"
+                className="squircle w-56 shadow-sm shadow-neutral-300 dark:shadow-black"
+              >
+                <DropdownMenuLabel className="text-sm font-semibold text-neutral-600 text-shadow-xs dark:text-neutral-400">
                   Choose Theme
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setColorMode("auto")}
                   className={cn(
-                    "gap-1.5",
+                    "squircle cursor-pointer gap-1.5",
                     colorMode === "auto" && "bg-secondary text-foreground"
                   )}
                 >
@@ -292,7 +298,7 @@ export function PromptBar({ isGenerating, onGenerate }: PromptBarProps) {
                         setColorMode("palette")
                       }}
                       className={cn(
-                        "gap-1.5",
+                        "squircle cursor-pointer gap-3",
                         isSelected && "bg-secondary text-foreground"
                       )}
                     >
@@ -300,7 +306,7 @@ export function PromptBar({ isGenerating, onGenerate }: PromptBarProps) {
                         {pal.colors.map((c, i) => (
                           <span
                             key={i}
-                            className="h-2.5 w-2.5 rounded-full border border-black/10"
+                            className="squircle h-2.5 w-2.5 rounded-full border border-black/10 shadow-sm shadow-neutral-400 dark:shadow-black"
                             style={{ backgroundColor: c }}
                           />
                         ))}

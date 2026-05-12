@@ -15,7 +15,7 @@ import { AppLogo } from "@/components/icons/logos"
 import { cn } from "@/lib/utils"
 import { IconBookmarks } from "@tabler/icons-react"
 
-type DashboardShellProps = React.ComponentProps<"aside">
+type DashboardShellProps = React.ComponentProps<"div">
 
 export function DashboardShell({ className, ...props }: DashboardShellProps) {
   return (
